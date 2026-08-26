@@ -3,6 +3,7 @@ package com.bravest.browser
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -11,6 +12,7 @@ import android.webkit.*
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class MainActivity : AppCompatActivity() {
@@ -26,11 +28,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnHome: ImageButton
     private lateinit var btnSpeedPill: TextView
     private lateinit var fullscreenContainer: FrameLayout
+    private lateinit var speedButtonsContainer: LinearLayout
+    private lateinit var btnSpeedMinus: Button
+    private lateinit var btnSpeedPlus: Button
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     private val shieldsEngine = ShieldsEngine()
+    private val speedOptions = floatArrayOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f)
+    private var currentSpeed: Float = 1.0f
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         initViews()
+        setupSpeedBar()
         setupWebView()
         setupListeners()
 
@@ -70,6 +78,80 @@ class MainActivity : AppCompatActivity() {
         btnHome = findViewById(R.id.btnHome)
         btnSpeedPill = findViewById(R.id.btnSpeedPill)
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
+        speedButtonsContainer = findViewById(R.id.speedButtonsContainer)
+        btnSpeedMinus = findViewById(R.id.btnSpeedMinus)
+        btnSpeedPlus = findViewById(R.id.btnSpeedPlus)
+    }
+
+    private fun setupSpeedBar() {
+        speedButtonsContainer.removeAllViews()
+
+        for (spd in speedOptions) {
+            val btn = Button(this).apply {
+                text = "${spd}x"
+                textSize = 11f
+                setPadding(18, 0, 18, 0)
+                gravity = Gravity.CENTER
+                minWidth = 0
+                minHeight = 0
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    (30 * resources.displayMetrics.density).toInt()
+                ).apply {
+                    marginEnd = (4 * resources.displayMetrics.density).toInt()
+                }
+                layoutParams = params
+                tag = spd
+
+                setOnClickListener {
+                    setPlaybackSpeed(spd)
+                }
+            }
+            speedButtonsContainer.addView(btn)
+        }
+        updateSpeedUi(1.0f)
+
+        btnSpeedMinus.setOnClickListener {
+            val idx = speedOptions.indexOf(currentSpeed)
+            if (idx > 0) {
+                setPlaybackSpeed(speedOptions[idx - 1])
+            } else {
+                setPlaybackSpeed(speedOptions[0])
+            }
+        }
+
+        btnSpeedPlus.setOnClickListener {
+            val idx = speedOptions.indexOf(currentSpeed)
+            if (idx != -1 && idx < speedOptions.size - 1) {
+                setPlaybackSpeed(speedOptions[idx + 1])
+            } else if (idx == -1) {
+                setPlaybackSpeed(2.0f)
+            } else {
+                setPlaybackSpeed(4.0f)
+            }
+        }
+    }
+
+    private fun setPlaybackSpeed(speed: Float) {
+        currentSpeed = speed
+        updateSpeedUi(speed)
+        webView.evaluateJavascript("if (window.bravestSetSpeed) window.bravestSetSpeed($speed);", null)
+    }
+
+    private fun updateSpeedUi(speed: Float) {
+        btnSpeedPill.text = "⚡ ${speed}x"
+
+        for (i in 0 until speedButtonsContainer.childCount) {
+            val child = speedButtonsContainer.getChildAt(i) as? Button ?: continue
+            val btnSpeed = child.tag as? Float ?: 1.0f
+            if (Math.abs(btnSpeed - speed) < 0.05f) {
+                child.setBackgroundResource(R.drawable.bg_speed_btn_active)
+                child.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+            } else {
+                child.setBackgroundResource(R.drawable.bg_speed_btn)
+                child.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -118,6 +200,7 @@ class MainActivity : AppCompatActivity() {
                 shieldsEngine.injectCosmeticFilter(webView)
                 if (url != null && url.contains("youtube.com", ignoreCase = true)) {
                     YouTubeSpeedEngine.inject(webView)
+                    setPlaybackSpeed(currentSpeed)
                 }
             }
         }
@@ -180,9 +263,11 @@ class MainActivity : AppCompatActivity() {
             showShieldsDialog()
         }
 
-        // Speed Menu Popup
+        // Top Speed Pill click
         btnSpeedPill.setOnClickListener {
-            showSpeedDialog()
+            val idx = speedOptions.indexOf(currentSpeed)
+            val nextIdx = (idx + 1) % speedOptions.size
+            setPlaybackSpeed(speedOptions[nextIdx])
         }
     }
 
@@ -201,28 +286,13 @@ class MainActivity : AppCompatActivity() {
     private fun showShieldsDialog() {
         val status = if (shieldsEngine.shieldsEnabled) "Active" else "Disabled"
         MaterialAlertDialogBuilder(this)
-            .setTitle("🦁 Brave Shields Protection")
-            .setMessage("Status: $status\n\nBlocked Trackers & Ads: ${shieldsEngine.blockedCount}\n\nFeatures:\n✓ YouTube Video Ads Blocked\n✓ 3.0x & 4.0x Playback Turbo\n✓ Background Audio Playback")
+            .setTitle("🛡️ Brave Shields Protection")
+            .setMessage("Status: $status\n\nBlocked Trackers & Ads: ${shieldsEngine.blockedCount}\n\nFeatures:\n✓ YouTube Video Ads Blocked\n✓ 3.0x & 4.0x Playback Turbo\n✓ Background Audio Playback\n✓ Lower Quick Speed Panel")
             .setPositiveButton(if (shieldsEngine.shieldsEnabled) "Turn Off" else "Turn On") { _, _ ->
                 shieldsEngine.shieldsEnabled = !shieldsEngine.shieldsEnabled
                 webView.reload()
             }
             .setNegativeButton("Close", null)
-            .show()
-    }
-
-    private fun showSpeedDialog() {
-        val speeds = arrayOf("0.5x", "1.0x (Normal)", "1.25x", "1.5x", "1.75x", "2.0x", "2.5x", "3.0x (Turbo)", "3.5x", "4.0x (Ultra)")
-        val speedValues = floatArrayOf(0.5f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f)
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("⚡ Select Playback Speed")
-            .setItems(speeds) { _, which ->
-                val selected = speedValues[which]
-                btnSpeedPill.text = "${selected}x"
-                webView.evaluateJavascript("if (window.bravestSetSpeed) window.bravestSetSpeed($selected);", null)
-            }
-            .setNegativeButton("Cancel", null)
             .show()
     }
 

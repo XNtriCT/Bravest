@@ -18,7 +18,7 @@
         android:paddingStart="8dp"
         android:paddingEnd="8dp">
 
-        <!-- Brave Shields Button with Blocked Counter -->
+        <!-- Honey Badger App Logo & Brave Shields Button with Blocked Counter -->
         <LinearLayout
             android:id="@+id/btnShields"
             android:layout_width="wrap_content"
@@ -26,17 +26,17 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:background="@drawable/bg_shield_btn"
-            android:paddingStart="8dp"
+            android:paddingStart="6dp"
             android:paddingEnd="8dp"
             android:layout_marginEnd="6dp"
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🦁"
-                android:textSize="14sp" />
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/app_logo"
+                android:contentDescription="Bravest" />
 
             <TextView
                 android:id="@+id/textShieldsCount"
@@ -73,7 +73,7 @@
             android:layout_height="32dp"
             android:background="@drawable/bg_speed_pill"
             android:gravity="center"
-            android:text="⚡ 3x/4x"
+            android:text="⚡ 1.0x"
             android:textColor="#FB542B"
             android:textStyle="bold"
             android:textSize="11sp"
@@ -113,13 +113,83 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <!-- Lower Panel Speed Selection Dock (One-Tap Floating Toggles) -->
+    <LinearLayout
+        android:id="@+id/speedControlPanel"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#161622"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡ SPEED:"
+            android:textColor="#FB542B"
+            android:textStyle="bold"
+            android:textSize="11sp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnSpeedMinus"
+            android:layout_width="28dp"
+            android:layout_height="30dp"
+            android:text="-"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_speed_btn"
+            android:gravity="center"
+            android:padding="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Horizontal Scrollable Quick Speed Pills -->
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/speedButtonsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp">
+                <!-- Dynamically populated in MainActivity -->
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <Button
+            android:id="@+id/btnSpeedPlus"
+            android:layout_width="28dp"
+            android:layout_height="30dp"
+            android:text="+"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_speed_btn"
+            android:gravity="center"
+            android:padding="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
     <!-- Bottom Navigation Bar -->
     <LinearLayout
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
-        android:background="#16161E"
+        android:background="#12121A"
         android:gravity="center_vertical">
 
         <ImageButton
