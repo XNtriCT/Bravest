@@ -1,4 +1,4 @@
-# 🦁 Bravest Browser
+# 🦡 Bravest Browser
 
 > An exact fork of **Brave Browser** with all signature Brave Shields ad-blocking and privacy features, enhanced with native **3x and 4x YouTube playback speed multipliers**.
 
