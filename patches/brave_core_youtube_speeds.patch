@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Bravest Team <bravest@bravest-browser.org>
+Date: Wed, 26 Aug 2026 00:00:00 +0000
+Subject: [PATCH] brave-core: add native 3x and 4x YouTube playback speeds and
+ Greaselion auto-injection
+
+---
+ components/greaselion/browser/greaselion_service_impl.cc | 14 ++++++++++++++
+ components/brave_shields/browser/ad_block_service.cc     |  8 ++++++++
+ 2 files changed, 22 insertions(+)
+
+diff --git a/components/greaselion/browser/greaselion_service_impl.cc b/components/greaselion/browser/greaselion_service_impl.cc
+index a1b2c3d4..e5f6a7b8 100644
+--- a/components/greaselion/browser/greaselion_service_impl.cc
++++ b/components/greaselion/browser/greaselion_service_impl.cc
+@@ -45,6 +45,20 @@ void GreaselionServiceImpl::InitializeSiteSpecificScripts() {
+   // Register default site scripts
+   RegisterDefaultScriptlets();
+ 
++  // Bravest Enhancement: Register native YouTube 3x and 4x speed engine
++  std::string yt_speed_script = R"(
++    (function() {
++      window.__bravest_speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4];
++      window.addEventListener('keydown', (e) => {
++        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
++        const v = document.querySelector('video');
++        if (!v) return;
++        if (e.shiftKey && (e.key === '>' || e.key === '.')) { v.playbackRate = Math.min(4.0, v.playbackRate + 0.25); v.preservesPitch = true; }
++        if (e.shiftKey && (e.key === '<' || e.key === ',')) { v.playbackRate = Math.max(0.25, v.playbackRate - 0.25); v.preservesPitch = true; }
++      }, true);
++    })();
++  )";
++  RegisterScriptForPattern("*://*.youtube.com/*", yt_speed_script);
+ }
+ 
+diff --git a/components/brave_shields/browser/ad_block_service.cc b/components/brave_shields/browser/ad_block_service.cc
+index 12345678..87654321 100644
+--- a/components/brave_shields/browser/ad_block_service.cc
++++ b/components/brave_shields/browser/ad_block_service.cc
+@@ -102,6 +102,14 @@ void AdBlockService::OnBeforeURLRequest(
+     return;
+   }
+ 
++  // Block standard YouTube video ad analytics and telemetry segments
++  if (url.host() == "www.youtube.com" &&
++      (url.path().find("/api/stats/ads") != std::string::npos ||
++       url.path().find("/pagead/") != std::string::npos)) {
++    *result = net::ERR_BLOCKED_BY_CLIENT;
++    return;
++  }
++
+   // Standard Brave Shields rule matcher
+   CheckFilterList(url, result);
+ }
+-- 
+2.43.0

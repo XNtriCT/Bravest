@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Bravest - YouTube 3x & 4x Speed Turbo",
+  "version": "1.0.0",
+  "description": "Enables native 3x and 4x playback speed multipliers on YouTube with pitch preservation and Brave Shields compatibility.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Bravest YouTube Turbo"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

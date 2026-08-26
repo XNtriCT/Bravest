@@ -1,0 +1,26 @@
+{
+  "name": "bravest-browser",
+  "version": "1.0.0",
+  "description": "Bravest - Brave Browser fork with native 3x/4x YouTube speed playback and Brave Shields ad-blocking",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "brave",
+    "browser",
+    "adblocker",
+    "youtube",
+    "playback-speed"
+  ],
+  "author": "Bravest Project",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "@ghostery/adblocker-electron": "^2.18.2",
+    "cross-fetch": "^4.1.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1"
+  }
+}

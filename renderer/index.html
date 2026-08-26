@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bravest Browser</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="brave-dark-theme">
+  <!-- Top Titlebar and Tabstrip -->
+  <header id="titlebar">
+    <div class="drag-region"></div>
+    <div id="tabstrip-container">
+      <div id="tabs-list">
+        <!-- Tabs will be rendered here dynamically -->
+      </div>
+      <button id="new-tab-btn" title="New Tab (Ctrl+T)" class="icon-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Window control buttons -->
+    <div id="window-controls">
+      <button id="min-btn" class="win-btn" title="Minimize">
+        <svg width="10" height="10" viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
+      </button>
+      <button id="max-btn" class="win-btn" title="Maximize">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor"><rect x="0.5" y="0.5" width="9" height="9"/></svg>
+      </button>
+      <button id="close-btn" class="win-btn win-close" title="Close">
+        <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.2">
+          <line x1="0" y1="0" x2="10" y2="10"/>
+          <line x1="10" y1="0" x2="0" y2="10"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Toolbar & Omnibox -->
+  <div id="toolbar">
+    <div class="nav-actions">
+      <button id="back-btn" class="icon-btn" title="Click to go back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button id="forward-btn" class="icon-btn" title="Click to go forward">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+      <button id="reload-btn" class="icon-btn" title="Reload this page">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"></path>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Omnibox (Address & Search Bar) -->
+    <div id="omnibox-wrapper">
+      <div id="security-icon" class="secure" title="Connection is secure">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <input type="text" id="url-input" placeholder="Search Brave or enter web address" autocomplete="off" spellcheck="false">
+      
+      <!-- YouTube 3x/4x Speed indicator pill in omnibox -->
+      <div id="yt-speed-badge" class="omnibox-badge" title="Bravest 3x/4x Speed Turbo Active">
+        <span class="badge-icon">⚡</span>
+        <span class="badge-text">3x/4x Ready</span>
+      </div>
+
+      <!-- Brave Shields Button in Omnibox -->
+      <button id="shields-btn" title="Brave Shields Protection">
+        <svg class="lion-shield-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7V12C3 17.5 7 21.5 12 23C17 21.5 21 17.5 21 12V7L12 2Z" fill="url(#shield-grad)" stroke="#ff5500" stroke-width="1.5"/>
+          <path d="M12 7V17M8 11L12 15L16 11" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="shield-grad" x1="3" y1="2" x2="21" y2="23" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#ff7700"/>
+              <stop offset="1" stop-color="#ff3300"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span id="shields-blocked-count">0</span>
+      </button>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="toolbar-actions">
+      <button id="quick-yt-btn" class="feature-btn" title="Open YouTube with 3x/4x Speeds">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff0000">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        <span>YouTube 4x</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bookmarks Bar -->
+  <div id="bookmarks-bar">
+    <button class="bookmark-item" data-url="https://www.youtube.com">
+      <span class="bm-icon">▶</span> YouTube (3x/4x)
+    </button>
+    <button class="bookmark-item" data-url="https://search.brave.com">
+      <span class="bm-icon">🦁</span> Brave Search
+    </button>
+    <button class="bookmark-item" data-url="https://github.com/brave/brave-core">
+      <span class="bm-icon">📦</span> brave-core GitHub
+    </button>
+    <button class="bookmark-item" data-url="https://news.ycombinator.com">
+      <span class="bm-icon">Y</span> Hacker News
+    </button>
+  </div>
+
+  <!-- Brave Shields Dropdown Modal -->
+  <div id="shields-modal" class="hidden">
+    <div class="shields-card">
+      <div class="shields-header">
+        <div class="shields-brand">
+          <div class="shield-logo">🦁</div>
+          <div>
+            <h3>Brave Shields</h3>
+            <span id="current-site-host" class="site-host">Protected</span>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="shields-toggle-input" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="shields-stats-box">
+        <div class="stat-item">
+          <span id="shield-stat-ads" class="stat-number">0</span>
+          <span class="stat-label">Trackers & Ads Blocked</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">3x / 4x</span>
+          <span class="stat-label">YouTube Speed Engine</span>
+        </div>
+      </div>
+
+      <div class="shields-features-list">
+        <div class="feature-row">
+          <span>✓ Cross-site trackers blocked</span>
+        </div>
+        <div class="feature-row">
+          <span>✓ YouTube pre-roll ads blocked</span>
+        </div>
+        <div class="feature-row">
+          <span>✓ Native 3.0x & 4.0x Player Speeds</span>
+        </div>
+        <div class="feature-row">
+          <span>✓ Pitch preservation & audio sync</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Webview Container -->
+  <main id="webview-container">
+    <!-- Webviews will be mounted here dynamically -->
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 220px;
+      margin: 0;
+      padding: 14px;
+      background: #14141c;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ff5500;
+    }
+    .label {
+      font-size: 11px;
+      color: #a0a0b0;
+      margin-bottom: 6px;
+    }
+    .speed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      background: #222230;
+      border: 1px solid rgba(255,85,0,0.2);
+      color: #eee;
+      border-radius: 6px;
+      padding: 6px 0;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .btn:hover {
+      background: #ff5500;
+      color: #fff;
+    }
+    .feature-list {
+      font-size: 10px;
+      color: #2ed573;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span style="font-size: 18px;">🦁</span>
+    <span class="title">Bravest Turbo</span>
+  </div>
+  <div class="label">Quick Speed Multipliers</div>
+  <div class="speed-grid">
+    <button class="btn" data-speed="1">1x</button>
+    <button class="btn" data-speed="1.5">1.5x</button>
+    <button class="btn" data-speed="2">2x</button>
+    <button class="btn" data-speed="2.5">2.5x</button>
+    <button class="btn" data-speed="3" style="font-weight:bold;color:#ff7733;">3x</button>
+    <button class="btn" data-speed="3.5" style="font-weight:bold;color:#ff7733;">3.5x</button>
+    <button class="btn" data-speed="4" style="font-weight:bold;color:#ff5500;border-color:#ff5500;">4x</button>
+    <button class="btn" data-speed="0.75">0.75x</button>
+  </div>
+  <div class="feature-list">
+    <span>✓ 3x & 4x Multipliers active</span>
+    <span>✓ Shift + &gt; keyboard scale up to 4x</span>
+    <span>✓ Native Pitch Preservation</span>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
