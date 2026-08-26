@@ -3,3 +3,8 @@ dist/
 out/
 .vscode/
 *.log
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+*.apk

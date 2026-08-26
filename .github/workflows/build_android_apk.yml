@@ -1,0 +1,38 @@
+name: Build Bravest Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build Bravest Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Debug APK
+        working-directory: ./android
+        run: |
+          chmod +x gradlew || true
+          gradle wrapper
+          ./gradlew assembleDebug
+
+      - name: Upload Bravest APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bravest-Android-Browser-APK
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
