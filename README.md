@@ -5,6 +5,11 @@
 ![Bravest Browser](https://img.shields.io/badge/Bravest-Brave%20Fork-ff5500?style=for-the-badge&logo=brave)
 ![Ad Blocker](https://img.shields.io/badge/Brave%20Shields-Active-2ed573?style=for-the-badge)
 ![YouTube Speeds](https://img.shields.io/badge/YouTube%20Speeds-0.25x%20to%204.0x-ff7700?style=for-the-badge)
+![Android APK](https://img.shields.io/badge/Android%20APK-v1.0.0%20Available-green?style=for-the-badge&logo=android)
+
+### 🔗 Quick Links
+* **GitHub Repository**: [https://github.com/XNtriCT/Bravest](https://github.com/XNtriCT/Bravest)
+* **📱 Direct Android APK Download**: [Download Bravest.apk (GitHub Release v1.0.0)](https://github.com/XNtriCT/Bravest/releases/download/v1.0.0/Bravest.apk)
 
 ---
 
