@@ -68,11 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     webview.src = url;
     webview.setAttribute('allowpopups', 'true');
     webview.setAttribute('webpreferences', 'contextIsolation=no');
-    
-    // Inject the YouTube speed engine script into the webview preload
-    const preloadPath = window.location.href.includes('file://')
-      ? `${window.location.origin}${window.location.pathname.replace('index.html', '../engine/youtube/webview_preload.js')}`
-      : './engine/youtube/webview_preload.js';
 
     webviewContainer.appendChild(webview);
 
@@ -109,11 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     tabsList.appendChild(tabEl);
 
     // Webview event listeners
-    webview.addEventListener('dom-ready', () => {
-      // Injects the YouTube 3x/4x engine directly
-      injectYouTubeSpeedEngine(webview);
-    });
-
     webview.addEventListener('page-title-updated', (e) => {
       tabData.title = e.title;
       const titleSpan = tabEl.querySelector('.tab-title');
@@ -133,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (activeTabId === tabId) {
         updateOmnibox(e.url);
       }
-      injectYouTubeSpeedEngine(webview);
     });
 
     webview.addEventListener('did-navigate-in-page', (e) => {
@@ -141,112 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (activeTabId === tabId) {
         updateOmnibox(e.url);
       }
-      injectYouTubeSpeedEngine(webview);
     });
 
     switchTab(tabId);
     return tabData;
-  }
-
-  /**
-   * Inject YouTube 3x/4x script into webview
-   */
-  function injectYouTubeSpeedEngine(webview) {
-    const currentUrl = webview.getURL() || '';
-    if (currentUrl.includes('youtube.com')) {
-      ytSpeedBadge.style.display = 'flex';
-      // Execute the speed injection script in the webview context
-      webview.executeJavaScript(`
-        (function() {
-          if (window.__bravest_injected) return;
-          window.__bravest_injected = true;
-          console.log('[Bravest] Activating YouTube 3x/4x Speed Controller');
-          
-          const SPEED_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4];
-          const QUICK_HUD_PRESETS = [1, 1.5, 2, 3, 4];
-          let preferred = parseFloat(localStorage.getItem('bravest_speed')) || 1.0;
-
-          function setRate(r) {
-            r = Math.min(Math.max(r, 0.25), 4.0);
-            document.querySelectorAll('video').forEach(v => {
-              v.playbackRate = r;
-              v.defaultPlaybackRate = r;
-              v.preservesPitch = true;
-            });
-            localStorage.setItem('bravest_speed', r.toString());
-            updateHud(r);
-          }
-
-          function updateHud(r) {
-            document.querySelectorAll('.bravest-btn').forEach(btn => {
-              const sp = parseFloat(btn.dataset.s);
-              if (Math.abs(sp - r) < 0.05) {
-                btn.style.background = '#fb542b';
-                btn.style.color = '#fff';
-                btn.style.fontWeight = 'bold';
-              } else {
-                btn.style.background = 'rgba(20,20,30,0.85)';
-                btn.style.color = '#ccc';
-                btn.style.fontWeight = 'normal';
-              }
-            });
-          }
-
-          function injectHud() {
-            const player = document.querySelector('.html5-video-player');
-            if (!player || document.getElementById('bravest-hud')) return;
-            const hud = document.createElement('div');
-            hud.id = 'bravest-hud';
-            hud.style.cssText = 'position:absolute;top:12px;right:68px;z-index:9999;display:flex;gap:4px;background:rgba(15,15,22,0.85);backdrop-filter:blur(8px);padding:4px 8px;border-radius:8px;border:1px solid rgba(251,84,43,0.4);';
-            hud.innerHTML = '<span style="color:#fb542b;font-size:11px;font-weight:bold;display:flex;align-items:center;padding-right:4px;">⚡Speed:</span>';
-            QUICK_HUD_PRESETS.forEach(s => {
-              const b = document.createElement('button');
-              b.className = 'bravest-btn';
-              b.dataset.s = s;
-              b.textContent = s + 'x';
-              b.style.cssText = 'background:rgba(20,20,30,0.85);color:#ccc;border:none;border-radius:4px;padding:3px 6px;font-size:11px;cursor:pointer;';
-              b.onclick = (e) => { e.stopPropagation(); e.preventDefault(); setRate(s); };
-              hud.appendChild(b);
-            });
-            player.appendChild(hud);
-            const v = player.querySelector('video');
-            if (v) updateHud(v.playbackRate);
-          }
-
-          window.addEventListener('keydown', (e) => {
-            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-            const v = document.querySelector('video');
-            if (!v) return;
-            if (e.shiftKey && (e.key === '>' || e.key === '.')) {
-              e.stopImmediatePropagation(); e.preventDefault();
-              let cur = Math.round(v.playbackRate * 100) / 100;
-              let next = 4.0;
-              for (let s of SPEED_PRESETS) { if (s > cur + 0.05) { next = s; break; } }
-              setRate(next);
-            } else if (e.shiftKey && (e.key === '<' || e.key === ',')) {
-              e.stopImmediatePropagation(); e.preventDefault();
-              let cur = Math.round(v.playbackRate * 100) / 100;
-              let prev = 0.25;
-              for (let i = SPEED_PRESETS.length - 1; i >= 0; i--) {
-                if (SPEED_PRESETS[i] < cur - 0.05) { prev = SPEED_PRESETS[i]; break; }
-              }
-              setRate(prev);
-            }
-          }, true);
-
-          setInterval(injectHud, 1200);
-          setInterval(() => {
-            const v = document.querySelector('video');
-            if (v && preferred && v.playbackRate !== preferred) {
-              v.playbackRate = preferred;
-              v.preservesPitch = true;
-            }
-          }, 1500);
-        })();
-      `).catch(() => {});
-    } else {
-      ytSpeedBadge.style.display = 'none';
-    }
   }
 
   /**
@@ -405,6 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Initial tab on startup: YouTube with 3x/4x speed support
+  // Initial tab on startup: YouTube
   createTab('https://www.youtube.com');
 });

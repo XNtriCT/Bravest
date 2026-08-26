@@ -5,10 +5,14 @@
 
 const { app, BrowserWindow, session, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const BraveShieldsEngine = require('./engine/shields/adblocker');
 
 let mainWindow = null;
 const shieldsEngine = new BraveShieldsEngine();
+
+// Read YouTube turbo script once into memory for ultra-fast injection
+const ytTurboScript = fs.readFileSync(path.join(__dirname, 'engine', 'youtube', 'youtube_speed.js'), 'utf8');
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
@@ -32,9 +36,6 @@ async function createWindow() {
   // Load the Bravest UI
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  // Initialize Brave Shields in default session
-  await shieldsEngine.initialize(session.defaultSession);
-
   // Forward Shields blocked stats to UI
   shieldsEngine.setOnBlockedListener((stats) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -49,10 +50,31 @@ async function createWindow() {
 
 // App lifecycle
 app.whenReady().then(async () => {
-  // Custom user agent to ensure modern YouTube player features
+  // Initialize Brave Shields network blocker on default session
+  await shieldsEngine.initialize(session.defaultSession);
+
+  // Set modern user agent
   session.defaultSession.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Bravest/1.0'
   );
+
+  // Handle all webviews and webContents
+  app.on('web-contents-created', (event, contents) => {
+    // Attach cosmetic ad blocking
+    shieldsEngine.attachToWebContents(contents);
+
+    // If webview navigates to YouTube, inject the speed engine and ad destroyer
+    const injectYouTubeTurbo = () => {
+      const url = contents.getURL() || '';
+      if (url.includes('youtube.com')) {
+        contents.executeJavaScript(ytTurboScript).catch(() => {});
+      }
+    };
+
+    contents.on('dom-ready', injectYouTubeTurbo);
+    contents.on('did-finish-load', injectYouTubeTurbo);
+    contents.on('did-navigate-in-page', injectYouTubeTurbo);
+  });
 
   await createWindow();
 

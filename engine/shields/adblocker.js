@@ -1,13 +1,96 @@
 /**
  * Bravest Browser - Brave Shields Ad & Tracker Blocker Engine
- * Full-spectrum network interception, cosmetic filtering, scriptlet injection,
- * and YouTube ad-segment remover.
+ * Multi-layer protection: Network blocking + Cosmetic CSS + Scriptlet ad neutralizer
  */
 
 const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const fetch = require('cross-fetch');
-const fs = require('fs');
-const path = require('path');
+
+// Comprehensive list of ad & tracker domains/patterns
+const AD_PATTERNS = [
+  'googleads.g.doubleclick.net',
+  'pagead2.googlesyndication.com',
+  'pubads.g.doubleclick.net',
+  'adservice.google.com',
+  'static.doubleclick.net',
+  'securepubads.g.doubleclick.net',
+  'ad.doubleclick.net',
+  'google-analytics.com',
+  'googletagmanager.com',
+  'googlesyndication.com',
+  'scorecardresearch.com',
+  'criteo.com',
+  'taboola.com',
+  'outbrain.com',
+  'adnxs.com',
+  'rubiconproject.com',
+  'amazon-adsystem.com',
+  'casalemedia.com',
+  'openx.net',
+  'adroll.com',
+  'adblade.com',
+  'quantserve.com',
+  'advertising.com',
+  'serving-sys.com',
+  'moatads.com',
+  'innovid.com',
+  'flashtalking.com',
+  'smartadserver.com',
+  'bidswitch.net',
+  'adsrvr.org',
+  'youtube.com/api/stats/ads',
+  'youtube.com/pagead',
+  'youtube.com/youtubei/v1/player/ad_break',
+  'youtube.com/get_midroll_info',
+  'youtube.com/ptracking'
+];
+
+// Cosmetic ad-hiding CSS injected across all web pages
+const COSMETIC_AD_BLOCK_CSS = `
+  /* YouTube Ad Elements */
+  .video-ads,
+  .ytp-ad-module,
+  .ytp-ad-overlay-container,
+  .ytp-ad-player-overlay,
+  .ytp-ad-image-overlay,
+  .ytp-ad-text-overlay,
+  ytd-ad-slot-renderer,
+  ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
+  ytd-in-feed-ad-layout-renderer,
+  ytd-banner-promo-renderer,
+  ytd-promoted-sparkles-web-renderer,
+  ytd-promoted-video-renderer,
+  ytd-display-ad-renderer,
+  ytd-statement-banner-renderer,
+  #masthead-ad,
+  #player-ads,
+  #ad-slot,
+  .ytd-merch-shelf-renderer,
+  ytd-companion-slot-renderer {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* General Web Ads */
+  ins.adsbygoogle,
+  .adsbygoogle,
+  [id^="google_ads_"],
+  [id^="div-gpt-ad"],
+  .ad-container,
+  .ad-wrapper,
+  .ad-banner,
+  .advertisement,
+  .sponsored-content,
+  .taboola,
+  .outbrain {
+    display: none !important;
+    visibility: hidden !important;
+  }
+`;
 
 class BraveShieldsEngine {
   constructor() {
@@ -18,84 +101,75 @@ class BraveShieldsEngine {
     this.onBlockedCallback = null;
   }
 
-  async initialize(session) {
+  async initialize(targetSession) {
     console.log('[Bravest Shields] Initializing Brave Shields ad and tracker blocker...');
+
+    // 1. Setup native network request interceptor (guaranteed to catch all ad network traffic)
+    this.setupNetworkInterceptor(targetSession);
+
+    // 2. Load prebuilt Ghostery / Brave Shields filter engine
     try {
-      // Load standard Brave/uBlock/Ghostery filter lists
       this.blocker = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch);
-
-      // Attach to Electron session
-      if (session) {
-        this.blocker.enableBlockingInSession(session);
-        console.log('[Bravest Shields] Network and cosmetic blocking enabled in session.');
+      if (targetSession && this.blocker) {
+        this.blocker.enableBlockingInSession(targetSession);
+        console.log('[Bravest Shields] Ghostery prebuilt filter engine enabled.');
       }
-
-      // Track blocked requests
-      this.blocker.on('request-blocked', (request) => {
-        if (!this.shieldsEnabled) return;
-        this.blockedCount++;
-        const hostname = new URL(request.url || 'http://unknown').hostname;
-        const currentSiteCount = this.siteStats.get(hostname) || 0;
-        this.siteStats.set(hostname, currentSiteCount + 1);
-
-        if (this.onBlockedCallback) {
-          this.onBlockedCallback({
-            total: this.blockedCount,
-            url: request.url,
-            hostname
-          });
-        }
-      });
-
-      console.log('[Bravest Shields] Brave Shields engine ready.');
     } catch (err) {
-      console.error('[Bravest Shields] Error initializing prebuilt lists, falling back to manual blocker:', err);
-      this.setupFallbackBlocker(session);
+      console.warn('[Bravest Shields] Warning: Ghostery list attach failed, using native network shield:', err.message);
     }
   }
 
-  setupFallbackBlocker(session) {
-    if (!session) return;
-    const adDomains = [
-      'googleads.g.doubleclick.net',
-      'pagead2.googlesyndication.com',
-      'pubads.g.doubleclick.net',
-      'adservice.google.com',
-      'static.doubleclick.net',
-      'youtube.com/api/stats/ads',
-      'youtube.com/pagead',
-      'ad.doubleclick.net',
-      'securepubads.g.doubleclick.net',
-      'analytics.google.com',
-      'googletagmanager.com'
-    ];
+  setupNetworkInterceptor(targetSession) {
+    if (!targetSession || !targetSession.webRequest) return;
 
-    session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+    targetSession.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
       if (!this.shieldsEnabled) {
         callback({ cancel: false });
         return;
       }
 
-      const match = adDomains.some((domain) => details.url.includes(domain));
-      if (match) {
+      const url = details.url || '';
+      const isAd = AD_PATTERNS.some((pattern) => url.includes(pattern));
+
+      if (isAd) {
         this.blockedCount++;
+        try {
+          const hostname = new URL(url).hostname;
+          const current = this.siteStats.get(hostname) || 0;
+          this.siteStats.set(hostname, current + 1);
+        } catch (_) {}
+
         if (this.onBlockedCallback) {
           this.onBlockedCallback({
             total: this.blockedCount,
-            url: details.url,
-            hostname: new URL(details.url).hostname
+            url: url
           });
         }
+
+        // Cancel the ad network request
         callback({ cancel: true });
       } else {
         callback({ cancel: false });
+      }
+    });
+
+    console.log('[Bravest Shields] Native network interceptor active.');
+  }
+
+  attachToWebContents(webContents) {
+    if (!webContents) return;
+
+    // Inject cosmetic ad-blocking CSS as soon as DOM loads
+    webContents.on('dom-ready', () => {
+      if (this.shieldsEnabled) {
+        webContents.insertCSS(COSMETIC_AD_BLOCK_CSS).catch(() => {});
       }
     });
   }
 
   setShieldsEnabled(enabled) {
     this.shieldsEnabled = enabled;
-    console.log(`[Bravest Shields] Shields status: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`[Bravest Shields] Shields protection: ${enabled ? 'ON' : 'OFF'}`);
   }
 
   getBlockedStats() {
