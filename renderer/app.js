@@ -29,15 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const ytSpeedBadge = document.getElementById('yt-speed-badge');
 
   // Window Controls
-  minBtn.addEventListener('click', () => window.bravestAPI?.minimize());
-  maxBtn.addEventListener('click', () => window.bravestAPI?.maximize());
-  closeBtn.addEventListener('click', () => window.bravestAPI?.close());
+  if (minBtn) minBtn.addEventListener('click', () => window.bravestAPI?.minimize());
+  if (maxBtn) maxBtn.addEventListener('click', () => window.bravestAPI?.maximize());
+  if (closeBtn) closeBtn.addEventListener('click', () => window.bravestAPI?.close());
 
   /**
    * Format input into valid URL or Brave Search query
    */
   function formatSearchOrUrl(input) {
-    input = input.trim();
+    input = (input || '').trim();
     if (!input) return 'https://search.brave.com';
 
     // Check if it's already a URL
@@ -91,15 +91,28 @@ document.addEventListener('DOMContentLoaded', () => {
       <button class="tab-close-btn" title="Close tab">✕</button>
     `;
 
+    // Click tab to switch
     tabEl.addEventListener('click', (e) => {
       if (e.target.classList.contains('tab-close-btn')) return;
       switchTab(tabId);
     });
 
-    tabEl.querySelector('.tab-close-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeTab(tabId);
+    // Middle-click tab to close
+    tabEl.addEventListener('auxclick', (e) => {
+      if (e.button === 1) {
+        e.preventDefault();
+        closeTab(tabId);
+      }
     });
+
+    // Close button click
+    const closeBtnEl = tabEl.querySelector('.tab-close-btn');
+    if (closeBtnEl) {
+      closeBtnEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeTab(tabId);
+      });
+    }
 
     tabsList.appendChild(tabEl);
 
@@ -107,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     webview.addEventListener('page-title-updated', (e) => {
       tabData.title = e.title;
       const titleSpan = tabEl.querySelector('.tab-title');
-      if (titleSpan) titleSpan.textContent = e.title;
+      if (titleSpan) titleSpan.textContent = e.title || 'New Tab';
     });
 
     webview.addEventListener('page-favicon-updated', (e) => {
@@ -173,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabs.splice(index, 1);
 
     if (tabs.length === 0) {
-      createTab('https://search.brave.com');
+      createTab('https://www.youtube.com');
     } else if (activeTabId === tabId) {
       const newActive = tabs[Math.max(0, index - 1)];
       switchTab(newActive.id);
@@ -181,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Update Omnibox URL display
+   * Update Omnibox URL & Speed display
    */
   function updateOmnibox(url) {
     urlInput.value = url;
@@ -194,9 +207,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (url.includes('youtube.com')) {
       ytSpeedBadge.style.display = 'flex';
+      syncSpeedBadge();
     } else {
       ytSpeedBadge.style.display = 'none';
     }
+  }
+
+  /**
+   * Sync active video playback speed with omnibox speed badge
+   */
+  function syncSpeedBadge() {
+    const wv = getActiveWebview();
+    if (!wv) return;
+
+    wv.executeJavaScript('(()=>{ const v = document.querySelector("video"); return v ? v.playbackRate : 1; })()')
+      .then((rate) => {
+        if (rate && ytSpeedBadge) {
+          const badgeText = ytSpeedBadge.querySelector('.badge-text');
+          if (badgeText) {
+            badgeText.textContent = `${parseFloat(rate).toFixed(2).replace(/\.00$/, '')}x Speed`;
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
+  // Periodic speed sync
+  setInterval(() => {
+    const wv = getActiveWebview();
+    if (wv && (wv.getURL() || '').includes('youtube.com')) {
+      syncSpeedBadge();
+    }
+  }, 600);
+
+  // Clicking Omnibox Speed Badge cycles through speeds: 1x -> 2x -> 3x -> 4x
+  if (ytSpeedBadge) {
+    ytSpeedBadge.addEventListener('click', () => {
+      const wv = getActiveWebview();
+      if (!wv) return;
+      wv.executeJavaScript(`
+        (()=>{
+          const v = document.querySelector('video');
+          if (!v) return;
+          const speeds = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
+          let cur = Math.round(v.playbackRate * 100) / 100;
+          let next = speeds[0];
+          for (let s of speeds) {
+            if (s > cur + 0.05) { next = s; break; }
+          }
+          v.playbackRate = next;
+          v.preservesPitch = true;
+          localStorage.setItem('bravest_speed', next.toString());
+          return next;
+        })()
+      `).then(() => syncSpeedBadge()).catch(() => {});
+    });
   }
 
   /**
@@ -207,38 +272,50 @@ document.addEventListener('DOMContentLoaded', () => {
     return active ? active.webview : null;
   }
 
-  backBtn.addEventListener('click', () => {
-    const wv = getActiveWebview();
-    if (wv && wv.canGoBack()) wv.goBack();
-  });
-
-  forwardBtn.addEventListener('click', () => {
-    const wv = getActiveWebview();
-    if (wv && wv.canGoForward()) wv.goForward();
-  });
-
-  reloadBtn.addEventListener('click', () => {
-    const wv = getActiveWebview();
-    if (wv) wv.reload();
-  });
-
-  urlInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      const targetUrl = formatSearchOrUrl(urlInput.value);
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
       const wv = getActiveWebview();
-      if (wv) {
-        wv.loadURL(targetUrl);
+      if (wv && wv.canGoBack()) wv.goBack();
+    });
+  }
+
+  if (forwardBtn) {
+    forwardBtn.addEventListener('click', () => {
+      const wv = getActiveWebview();
+      if (wv && wv.canGoForward()) wv.goForward();
+    });
+  }
+
+  if (reloadBtn) {
+    reloadBtn.addEventListener('click', () => {
+      const wv = getActiveWebview();
+      if (wv) wv.reload();
+    });
+  }
+
+  if (urlInput) {
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const targetUrl = formatSearchOrUrl(urlInput.value);
+        const wv = getActiveWebview();
+        if (wv) {
+          wv.loadURL(targetUrl);
+        }
       }
-    }
-  });
+    });
+  }
 
-  newTabBtn.addEventListener('click', () => {
-    createTab('https://www.youtube.com');
-  });
+  if (newTabBtn) {
+    newTabBtn.addEventListener('click', () => {
+      createTab('https://www.youtube.com');
+    });
+  }
 
-  quickYtBtn.addEventListener('click', () => {
-    createTab('https://www.youtube.com');
-  });
+  if (quickYtBtn) {
+    quickYtBtn.addEventListener('click', () => {
+      createTab('https://www.youtube.com');
+    });
+  }
 
   // Bookmarks clicks
   document.querySelectorAll('.bookmark-item').forEach((bm) => {
@@ -254,31 +331,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Shields UI interactions
-  shieldsBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    shieldsModal.classList.toggle('hidden');
-  });
+  if (shieldsBtn && shieldsModal) {
+    shieldsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      shieldsModal.classList.toggle('hidden');
+    });
 
-  document.addEventListener('click', (e) => {
-    if (!shieldsModal.contains(e.target) && e.target !== shieldsBtn) {
-      shieldsModal.classList.add('hidden');
-    }
-  });
+    document.addEventListener('click', (e) => {
+      if (!shieldsModal.contains(e.target) && e.target !== shieldsBtn) {
+        shieldsModal.classList.add('hidden');
+      }
+    });
+  }
 
-  shieldsToggleInput.addEventListener('change', () => {
-    const enabled = shieldsToggleInput.checked;
-    window.bravestAPI?.toggleShields(enabled);
-  });
+  if (shieldsToggleInput) {
+    shieldsToggleInput.addEventListener('change', () => {
+      const enabled = shieldsToggleInput.checked;
+      window.bravestAPI?.toggleShields(enabled);
+    });
+  }
 
   // Shields live stats updates from main process
   if (window.bravestAPI?.onShieldsUpdate) {
     window.bravestAPI.onShieldsUpdate((data) => {
-      shieldsBlockedCount.textContent = data.total || 0;
-      shieldStatAds.textContent = data.total || 0;
+      if (shieldsBlockedCount) shieldsBlockedCount.textContent = data.total || 0;
+      if (shieldStatAds) shieldStatAds.textContent = data.total || 0;
     });
   }
 
-  // Keyboard Shortcuts: Ctrl+T, Ctrl+W, Ctrl+L
+  // Keyboard Shortcuts: Ctrl+T, Ctrl+W, Ctrl+L, Ctrl+Tab
   window.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key.toLowerCase() === 't') {
       e.preventDefault();
@@ -288,7 +369,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (activeTabId) closeTab(activeTabId);
     } else if (e.ctrlKey && e.key.toLowerCase() === 'l') {
       e.preventDefault();
-      urlInput.select();
+      if (urlInput) urlInput.select();
+    } else if (e.ctrlKey && e.key === 'Tab') {
+      e.preventDefault();
+      if (tabs.length > 1) {
+        const curIndex = tabs.findIndex((t) => t.id === activeTabId);
+        const nextIndex = (curIndex + 1) % tabs.length;
+        switchTab(tabs[nextIndex].id);
+      }
     }
   });
 

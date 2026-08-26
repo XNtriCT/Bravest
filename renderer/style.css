@@ -39,22 +39,14 @@ body {
 
 /* Custom Titlebar & Tabs */
 #titlebar {
-  height: 40px;
+  height: 42px;
   background-color: var(--bg-primary);
   display: flex;
   align-items: center;
   position: relative;
   border-bottom: 1px solid var(--border-color);
-}
-
-.drag-region {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 140px;
-  height: 100%;
   -webkit-app-region: drag;
-  z-index: 1;
+  padding-right: 4px;
 }
 
 #tabstrip-container {
@@ -63,9 +55,9 @@ body {
   height: 100%;
   flex: 1;
   padding-left: 8px;
-  z-index: 2;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-app-region: no-drag !important;
 }
 
 #tabstrip-container::-webkit-scrollbar {
@@ -75,8 +67,9 @@ body {
 #tabs-list {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   height: 100%;
+  -webkit-app-region: no-drag !important;
 }
 
 .browser-tab {
@@ -92,20 +85,25 @@ body {
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.15s ease;
   position: relative;
+  border: 1px solid transparent;
+  border-bottom: none;
+  -webkit-app-region: no-drag !important;
 }
 
 .browser-tab:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
 }
 
 .browser-tab.active {
   background-color: var(--tab-active-bg);
   color: var(--text-primary);
-  box-shadow: 0 -2px 0 var(--accent-orange) inset;
+  border-color: var(--border-color);
+  border-bottom: 2px solid var(--accent-orange);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .tab-favicon {
@@ -120,11 +118,12 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+  pointer-events: none;
 }
 
 .tab-close-btn {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,9 +131,11 @@ body {
   border: none;
   background: transparent;
   color: var(--text-muted);
-  cursor: pointer;
-  opacity: 0;
+  cursor: pointer !important;
+  opacity: 0.6;
   transition: all 0.15s;
+  font-size: 11px;
+  -webkit-app-region: no-drag !important;
 }
 
 .browser-tab:hover .tab-close-btn {
@@ -142,8 +143,8 @@ body {
 }
 
 .tab-close-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 #new-tab-btn {
@@ -156,21 +157,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: pointer !important;
   margin-left: 4px;
-  transition: background 0.15s;
+  transition: all 0.15s;
+  -webkit-app-region: no-drag !important;
 }
 
 #new-tab-btn:hover {
   background: var(--bg-tertiary);
-  color: var(--text-primary);
+  color: var(--accent-orange);
 }
 
 /* Window Control Buttons */
 #window-controls {
   display: flex;
   height: 100%;
-  z-index: 2;
+  -webkit-app-region: no-drag !important;
 }
 
 .win-btn {
@@ -182,8 +184,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: background 0.15s;
+  -webkit-app-region: no-drag !important;
 }
 
 .win-btn:hover {
@@ -202,15 +205,17 @@ body {
   background-color: var(--bg-secondary);
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 12px;
   gap: 8px;
   border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: no-drag !important;
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
   gap: 2px;
+  -webkit-app-region: no-drag !important;
 }
 
 .icon-btn {
@@ -223,8 +228,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.15s;
+  -webkit-app-region: no-drag !important;
 }
 
 .icon-btn:hover {
@@ -234,7 +240,7 @@ body {
 
 .icon-btn:disabled {
   opacity: 0.3;
-  cursor: default;
+  cursor: default !important;
 }
 
 /* Omnibox Address & Search Bar */
@@ -249,6 +255,7 @@ body {
   padding: 0 10px;
   gap: 8px;
   transition: all 0.2s ease;
+  -webkit-app-region: no-drag !important;
 }
 
 #omnibox-wrapper:focus-within {
@@ -269,6 +276,7 @@ body {
   outline: none;
   color: var(--text-primary);
   font-size: 13px;
+  -webkit-app-region: no-drag !important;
 }
 
 #url-input::placeholder {
@@ -277,15 +285,21 @@ body {
 
 .omnibox-badge {
   background: rgba(251, 84, 43, 0.15);
-  border: 1px solid rgba(251, 84, 43, 0.35);
+  border: 1px solid rgba(251, 84, 43, 0.4);
   color: var(--accent-orange);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 8px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.omnibox-badge:hover {
+  background: rgba(251, 84, 43, 0.3);
 }
 
 /* Brave Shields Button */
@@ -299,8 +313,9 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.2s;
+  -webkit-app-region: no-drag !important;
 }
 
 #shields-btn:hover {
@@ -319,6 +334,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  -webkit-app-region: no-drag !important;
 }
 
 .feature-btn {
@@ -332,8 +348,9 @@ body {
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 16px;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.2s;
+  -webkit-app-region: no-drag !important;
 }
 
 .feature-btn:hover {
@@ -351,6 +368,7 @@ body {
   padding: 0 12px;
   gap: 6px;
   border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: no-drag !important;
 }
 
 .bookmark-item {
@@ -364,8 +382,9 @@ body {
   gap: 5px;
   padding: 3px 8px;
   border-radius: var(--radius-sm);
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.15s;
+  -webkit-app-region: no-drag !important;
 }
 
 .bookmark-item:hover {
@@ -535,6 +554,7 @@ input:checked + .slider:before {
   flex: 1;
   position: relative;
   background-color: #000000;
+  -webkit-app-region: no-drag !important;
 }
 
 webview {
