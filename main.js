@@ -21,6 +21,9 @@ async function createWindow() {
     minWidth: 800,
     minHeight: 600,
     frame: false,
+    resizable: true,
+    maximizable: true,
+    minimizable: true,
     title: 'Bravest',
     backgroundColor: '#121217',
     icon: path.join(__dirname, 'assets', 'icon.png'),
@@ -35,6 +38,18 @@ async function createWindow() {
 
   // Load the Bravest UI
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  // Sync window maximize/unmaximize states to renderer
+  mainWindow.on('maximize', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('window-is-maximized', true);
+    }
+  });
+  mainWindow.on('unmaximize', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('window-is-maximized', false);
+    }
+  });
 
   // Forward Shields blocked stats to UI
   shieldsEngine.setOnBlockedListener((stats) => {

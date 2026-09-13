@@ -1,17 +1,18 @@
 # 🦡 Bravest Browser
 
-> An exact fork of **Brave Browser** with all signature Brave Shields ad-blocking and privacy features, enhanced with native **3x and 4x YouTube playback speed multipliers**.
+> An exact fork of **Brave Browser** with all signature Brave Shields ad-blocking and privacy features, enhanced with a dedicated **single-tap 1x to 4x playback speed toolbar** and **Windows Aero Snap window management**.
 
 ![Bravest Browser](https://img.shields.io/badge/Bravest-Brave%20Fork-ff5500?style=for-the-badge&logo=brave)
+![Version](https://img.shields.io/badge/Version-v1.2.0-orange?style=for-the-badge)
 ![Ad Blocker](https://img.shields.io/badge/Brave%20Shields-Active-2ed573?style=for-the-badge)
-![YouTube Speeds](https://img.shields.io/badge/YouTube%20Speeds-0.25x%20to%204.0x-ff7700?style=for-the-badge)
+![YouTube Speeds](https://img.shields.io/badge/Video%20Speeds-0.75x%20to%204.0x-ff7700?style=for-the-badge)
 ![Android APK](https://img.shields.io/badge/Android%20APK-v1.1.0%20Available-green?style=for-the-badge&logo=android)
 ![Windows EXE](https://img.shields.io/badge/Windows%20EXE-Portable%20Ready-blue?style=for-the-badge&logo=windows)
 
 ### 🔗 Downloads & Releases
-* **💻 Windows Standalone Executable**: [`Bravest.exe`](file:///c:/Users/merin/Documents/My%20Automations/Random%20Ideas/Bravest/Bravest.exe) / Double-click `Bravest.lnk`
+* **💻 Windows Primary Executable**: [`dist/win-unpacked/Bravest.exe`](file:///c:/Users/merin/Documents/My%20Automations/Random%20Ideas/Bravest/dist/win-unpacked/Bravest.exe) / Double-click `Bravest.lnk`
+* **💻 Windows Standalone Portable**: [`Bravest.exe`](file:///c:/Users/merin/Documents/My%20Automations/Random%20Ideas/Bravest/Bravest.exe)
 * **📱 Android APK (v1.1.0)**: [Download Bravest.apk](https://github.com/XNtriCT/Bravest/releases/download/v1.1.0/Bravest.apk) / Local [`Bravest.apk`](file:///c:/Users/merin/Documents/My%20Automations/Random%20Ideas/Bravest/Bravest.apk)
-* **📦 GitHub Release v1.1.0**: [https://github.com/XNtriCT/Bravest/releases/tag/v1.1.0](https://github.com/XNtriCT/Bravest/releases/tag/v1.1.0)
 * **🐙 GitHub Repository**: [https://github.com/XNtriCT/Bravest](https://github.com/XNtriCT/Bravest)
 
 ---
@@ -22,18 +23,21 @@
   - Blocks banner ads, tracking scripts, and popups.
   - Automatically strips YouTube video ads (pre-rolls and mid-rolls).
   - Real-time tracker & ad blocked counter in the Omnibox.
-- **⚡ Native 3x & 4x YouTube Playback Speeds**:
-  - Play any YouTube video at **3.0x** and **4.0x** speeds (in addition to 0.25x, 0.5x, 0.75x, 1x, 1.25x, 1.5x, 1.75x, 2x, 2.5x, 3.5x).
-  - Extended keyboard shortcuts (`Shift + >` and `Shift + <`) scale all the way up to **4x** in 0.25x increments.
-  - On-Player HUD with one-click quick speed selectors (`1x`, `1.5x`, `2x`, `3x`, `4x`).
-  - Integrated into YouTube's native Settings gear popup menu.
-  - Smooth audio pitch preservation (`preservesPitch = true`) so voices remain clear and undistorted.
-  - Speed memory: remembers your preferred speed across videos.
+- **⚡ Linear Single-Tap Speed Toolbar (0.75x to 4x)**:
+  - Instant one-tap speed buttons located directly below the URL bar: `0.75x`, `1x`, `1.25x`, `1.5x`, `1.75x`, `2x`, `2.25x`, `2.5x`, `2.75x`, `3x`, `3.5x`, `4x`.
+  - Live active indicator: currently active speed glows in Brave Orange (`#fb542b`).
+  - Extended keyboard shortcuts (`Shift + >` and `Shift + <`) scale smoothly up to **4x**.
+  - Smooth audio pitch preservation (`preservesPitch = true`) keeping voices clear and natural.
+  - Speed memory: remembers your preferred playback speed across sessions.
+- **🪟 Windows Aero Snap & Window Management**:
+  - Drag the browser window smoothly from anywhere across the titlebar.
+  - Full Windows Aero Snap support: drag to top to maximize, drag to left/right screen edges to snap and pin side-by-side.
+  - Double-click titlebar to toggle maximize and restore.
+  - Standard edge and corner resizing with dynamic maximize/restore icon toggle.
 - **🌐 Brave UI & Aesthetics**:
-  - Modern Brave dark theme with orange highlights and glassmorphism.
-  - Multi-tab management with draggable tabs.
+  - Modern Brave dark theme with orange accents and glassmorphism.
+  - Multi-tab management with draggable tabs and fast keyboard navigation.
   - Omnibox with Brave Search integration.
-  - Quick bookmark bar and window controls.
 
 ---
 

@@ -12,6 +12,7 @@
 
   const SPEED_LEVELS = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0];
   const POPULAR_SPEEDS = [1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
+  const LINEAR_SPEEDS = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0];
   let currentSpeed = parseFloat(localStorage.getItem('bravest_speed')) || 1.0;
 
   // ==========================================
@@ -165,49 +166,81 @@
       player.appendChild(pill);
     }
 
-    // Top-Right Quick Speed Buttons
-    let quickBar = document.getElementById('bravest-quick-bar');
-    if (!quickBar) {
-      quickBar = document.createElement('div');
-      quickBar.id = 'bravest-quick-bar';
-      quickBar.style.cssText = `
-        position: absolute;
-        top: 14px;
-        right: 68px;
-        z-index: 999999;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        background: rgba(12, 12, 18, 0.88);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 85, 0, 0.35);
-        border-radius: 8px;
-        padding: 4px 6px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      `;
+    // Remove obsolete top-right bar if present
+    const oldQuickBar = document.getElementById('bravest-quick-bar');
+    if (oldQuickBar) oldQuickBar.remove();
+  }
 
-      const label = document.createElement('span');
-      label.innerHTML = '⚡<b>SPEED:</b>';
-      label.style.cssText = 'color:#ff6600; font-size:11px; font-family:sans-serif; margin-right:4px; user-select:none;';
-      quickBar.appendChild(label);
+  // ==========================================
+  // 4b. Linear Speed Bar Just Below Video Player
+  // ==========================================
+  function injectLinearSpeedBar() {
+    const video = document.querySelector('video');
+    if (!video) {
+      const existingBar = document.getElementById('bravest-linear-speed-bar');
+      if (existingBar) existingBar.remove();
+      return;
+    }
 
-      POPULAR_SPEEDS.forEach((spd) => {
+    // Clean up obsolete top-right bar if present
+    const oldQuickBar = document.getElementById('bravest-quick-bar');
+    if (oldQuickBar) oldQuickBar.remove();
+
+    const moviePlayer = document.querySelector('#movie_player, .html5-video-player');
+    const isFullscreen = !!(document.fullscreenElement || (moviePlayer && moviePlayer.classList.contains('ytp-fullscreen')));
+
+    let bar = document.getElementById('bravest-linear-speed-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'bravest-linear-speed-bar';
+
+      const label = document.createElement('div');
+      label.className = 'bravest-speed-bar-label';
+      label.innerHTML = `<span style="font-size:12px; color:#ff5500;">⚡</span> <span style="font-size:11px; font-weight:800; color:#ff6600; font-family:'Segoe UI', sans-serif; letter-spacing:0.5px;">SPEED:</span>`;
+      label.style.cssText = 'display:flex; align-items:center; gap:3px; margin-right:4px; user-select:none;';
+      bar.appendChild(label);
+
+      LINEAR_SPEEDS.forEach((spd) => {
         const btn = document.createElement('button');
         btn.className = 'bravest-speed-select-btn';
         btn.dataset.speed = spd.toString();
         btn.textContent = `${spd}x`;
+        btn.title = `Switch to ${spd}x speed (Single Tap)`;
         btn.style.cssText = `
           background: rgba(26, 26, 38, 0.85);
-          color: #e0e0e0;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #d0d0e0;
+          border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 4px;
           font-size: 11px;
           font-weight: 600;
-          padding: 3px 6px;
+          padding: 2px 7px;
+          min-width: 30px;
+          height: 22px;
           cursor: pointer;
-          font-family: sans-serif;
-          transition: all 0.15s;
+          font-family: 'Segoe UI', Roboto, sans-serif;
+          transition: all 0.15s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          user-select: none;
         `;
+
+        btn.addEventListener('mouseenter', () => {
+          if (Math.abs(parseFloat(btn.dataset.speed) - currentSpeed) >= 0.05) {
+            btn.style.background = 'rgba(45, 45, 65, 0.95)';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = 'rgba(255, 85, 0, 0.45)';
+          }
+        });
+
+        btn.addEventListener('mouseleave', () => {
+          if (Math.abs(parseFloat(btn.dataset.speed) - currentSpeed) >= 0.05) {
+            btn.style.background = 'rgba(26, 26, 38, 0.85)';
+            btn.style.color = '#d0d0e0';
+            btn.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+          }
+        });
 
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -215,10 +248,75 @@
           applySpeed(spd, true);
         });
 
-        quickBar.appendChild(btn);
+        bar.appendChild(btn);
       });
+    }
 
-      player.appendChild(quickBar);
+    if (isFullscreen && moviePlayer) {
+      // In fullscreen mode: anchor cleanly at the lower edge of the player
+      bar.style.cssText = `
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 4px;
+        background: rgba(12, 12, 18, 0.94);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 85, 0, 0.4);
+        border-radius: 8px;
+        padding: 4px 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      `;
+      if (bar.parentElement !== moviePlayer) {
+        moviePlayer.appendChild(bar);
+      }
+    } else {
+      // Normal mode: position directly below the video player, aligned linearly
+      bar.style.cssText = `
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin: 6px 0 8px 0;
+        padding: 5px 10px;
+        background: rgba(16, 16, 24, 0.95);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 85, 0, 0.28);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        max-width: 100%;
+        box-sizing: border-box;
+      `;
+
+      // Find target anchor: immediately below video player, before #below
+      const below = document.querySelector('#below');
+      const playerContainer = document.querySelector('#player-container-outer') ||
+                              document.querySelector('#player-container') ||
+                              document.querySelector('#player');
+
+      if (below && below.parentElement) {
+        if (bar.nextElementSibling !== below) {
+          below.parentElement.insertBefore(bar, below);
+        }
+      } else if (playerContainer && playerContainer.parentElement) {
+        if (bar.previousElementSibling !== playerContainer) {
+          playerContainer.insertAdjacentElement('afterend', bar);
+        }
+      } else if (moviePlayer && moviePlayer.parentElement) {
+        if (bar.previousElementSibling !== moviePlayer) {
+          moviePlayer.insertAdjacentElement('afterend', bar);
+        }
+      } else if (video.parentElement) {
+        if (bar.previousElementSibling !== video) {
+          video.insertAdjacentElement('afterend', bar);
+        }
+      }
     }
   }
 
@@ -340,19 +438,21 @@
       bottomBadge.innerHTML = `<span style="color:#ff5500; font-size:11px; margin-right:2px;">⚡</span>${rateText}`;
     }
 
-    // 3. Update Quick Buttons
+    // 3. Update Linear Speed Buttons
     document.querySelectorAll('.bravest-speed-select-btn').forEach((btn) => {
       const sp = parseFloat(btn.dataset.speed);
       if (Math.abs(sp - rate) < 0.05) {
         btn.style.background = '#ff5500';
         btn.style.color = '#ffffff';
-        btn.style.borderColor = '#ff5500';
+        btn.style.borderColor = '#ff7733';
         btn.style.boxShadow = '0 0 8px rgba(255, 85, 0, 0.6)';
+        btn.style.fontWeight = '800';
       } else {
         btn.style.background = 'rgba(26, 26, 38, 0.85)';
-        btn.style.color = '#cccccc';
-        btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        btn.style.color = '#d0d0e0';
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.12)';
         btn.style.boxShadow = 'none';
+        btn.style.fontWeight = '600';
       }
     });
   }
@@ -408,6 +508,7 @@
   setInterval(() => {
     killYouTubeAds();
     injectPersistentPlayerPill();
+    injectLinearSpeedBar();
     injectBottomControlBadge();
 
     const video = document.querySelector('video');
@@ -424,6 +525,7 @@
   setTimeout(() => {
     applySpeed(currentSpeed, false);
     injectPersistentPlayerPill();
+    injectLinearSpeedBar();
     injectBottomControlBadge();
   }, 500);
 })();

@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('bravestAPI', {
   minimize: () => ipcRenderer.send('window-minimize'),
   maximize: () => ipcRenderer.send('window-maximize'),
   close: () => ipcRenderer.send('window-close'),
+  onWindowMaximized: (callback) => ipcRenderer.on('window-is-maximized', (_, isMaximized) => callback(isMaximized)),
 
   // Listeners from Main Process
   onTabUpdated: (callback) => ipcRenderer.on('tab-updated', (_, data) => callback(data)),

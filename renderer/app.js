@@ -33,6 +33,40 @@ document.addEventListener('DOMContentLoaded', () => {
   if (maxBtn) maxBtn.addEventListener('click', () => window.bravestAPI?.maximize());
   if (closeBtn) closeBtn.addEventListener('click', () => window.bravestAPI?.close());
 
+  // Double-click titlebar to maximize / unmaximize
+  const titlebar = document.getElementById('titlebar');
+  if (titlebar) {
+    titlebar.addEventListener('dblclick', (e) => {
+      if (e.target.closest('#window-controls, .browser-tab, #new-tab-btn, button, input')) return;
+      window.bravestAPI?.maximize();
+    });
+  }
+
+  // Sync Maximize / Restore button state with OS
+  if (window.bravestAPI?.onWindowMaximized) {
+    window.bravestAPI.onWindowMaximized((isMaximized) => {
+      document.body.classList.toggle('window-maximized', isMaximized);
+      if (maxBtn) {
+        if (isMaximized) {
+          maxBtn.title = 'Restore';
+          maxBtn.innerHTML = `
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+              <rect x="2.5" y="0.5" width="7" height="7"/>
+              <polyline points="0.5 2.5 0.5 9.5 7.5 9.5"/>
+            </svg>
+          `;
+        } else {
+          maxBtn.title = 'Maximize';
+          maxBtn.innerHTML = `
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor">
+              <rect x="0.5" y="0.5" width="9" height="9"/>
+            </svg>
+          `;
+        }
+      }
+    });
+  }
+
   /**
    * Format input into valid URL or Brave Search query
    */
@@ -214,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Sync active video playback speed with omnibox speed badge
+   * Sync active video playback speed with omnibox speed badge & toolbar buttons
    */
   function syncSpeedBadge() {
     const wv = getActiveWebview();
@@ -222,15 +256,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     wv.executeJavaScript('(()=>{ const v = document.querySelector("video"); return v ? v.playbackRate : 1; })()')
       .then((rate) => {
-        if (rate && ytSpeedBadge) {
-          const badgeText = ytSpeedBadge.querySelector('.badge-text');
-          if (badgeText) {
-            badgeText.textContent = `${parseFloat(rate).toFixed(2).replace(/\.00$/, '')}x Speed`;
+        if (rate) {
+          if (ytSpeedBadge) {
+            const badgeText = ytSpeedBadge.querySelector('.badge-text');
+            if (badgeText) {
+              badgeText.textContent = `${parseFloat(rate).toFixed(2).replace(/\.00$/, '')}x Speed`;
+            }
           }
+          updateSpeedButtonsUI(rate);
         }
       })
       .catch(() => {});
   }
+
+  /**
+   * Direct single-tap speed controller for active webview
+   */
+  function setVideoSpeed(speed) {
+    const wv = getActiveWebview();
+    if (!wv) return;
+    wv.executeJavaScript(`
+      (()=>{
+        const v = document.querySelector('video');
+        if (!v) return null;
+        const rate = ${speed};
+        v.playbackRate = rate;
+        v.defaultPlaybackRate = rate;
+        if ('preservesPitch' in v) v.preservesPitch = true;
+        if ('webkitPreservesPitch' in v) v.webkitPreservesPitch = true;
+        localStorage.setItem('bravest_speed', rate.toString());
+        return rate;
+      })()
+    `).then((rate) => {
+      syncSpeedBadge();
+      updateSpeedButtonsUI(speed);
+    }).catch(() => {});
+  }
+
+  function updateSpeedButtonsUI(rate) {
+    const parsedRate = parseFloat(rate);
+    document.querySelectorAll('.speed-btn').forEach((btn) => {
+      const spd = parseFloat(btn.dataset.speed);
+      if (Math.abs(spd - parsedRate) < 0.05) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  // Quick Speed Buttons click listener (Toolbar just below URL bar)
+  document.querySelectorAll('.speed-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const spd = parseFloat(btn.dataset.speed);
+      setVideoSpeed(spd);
+    });
+  });
 
   // Periodic speed sync
   setInterval(() => {

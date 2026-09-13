@@ -24,6 +24,9 @@
       </button>
     </div>
 
+    <!-- Drag Spacer across empty titlebar space -->
+    <div id="titlebar-drag-spacer"></div>
+
     <!-- Window control buttons -->
     <div id="window-controls">
       <button id="min-btn" class="win-btn" title="Minimize">
@@ -105,20 +108,30 @@
     </div>
   </div>
 
-  <!-- Bookmarks Bar -->
+  <!-- Bookmarks & Quick Speed Bar -->
   <div id="bookmarks-bar">
-    <button class="bookmark-item" data-url="https://www.youtube.com">
-      <span class="bm-icon">▶</span> YouTube (3x/4x)
-    </button>
-    <button class="bookmark-item" data-url="https://search.brave.com">
+    <button class="bookmark-item" data-url="https://search.brave.com" title="Brave Search">
       <span class="bm-icon">🦁</span> Brave Search
     </button>
-    <button class="bookmark-item" data-url="https://github.com/brave/brave-core">
-      <span class="bm-icon">📦</span> brave-core GitHub
-    </button>
-    <button class="bookmark-item" data-url="https://news.ycombinator.com">
-      <span class="bm-icon">Y</span> Hacker News
-    </button>
+    <div class="speed-bar-divider"></div>
+    <div class="speed-bar-label">
+      <span class="speed-icon">⚡</span>
+      <span>Speed:</span>
+    </div>
+    <div id="speed-buttons-container">
+      <button class="speed-btn" data-speed="0.75" title="0.75x Speed">0.75x</button>
+      <button class="speed-btn" data-speed="1.0" title="1x Normal Speed">1x</button>
+      <button class="speed-btn" data-speed="1.25" title="1.25x Speed">1.25x</button>
+      <button class="speed-btn" data-speed="1.5" title="1.5x Speed">1.5x</button>
+      <button class="speed-btn" data-speed="1.75" title="1.75x Speed">1.75x</button>
+      <button class="speed-btn" data-speed="2.0" title="2x Speed">2x</button>
+      <button class="speed-btn" data-speed="2.25" title="2.25x Speed">2.25x</button>
+      <button class="speed-btn" data-speed="2.5" title="2.5x Speed">2.5x</button>
+      <button class="speed-btn" data-speed="2.75" title="2.75x Speed">2.75x</button>
+      <button class="speed-btn" data-speed="3.0" title="3x Speed">3x</button>
+      <button class="speed-btn" data-speed="3.5" title="3.5x Speed">3.5x</button>
+      <button class="speed-btn" data-speed="4.0" title="4x Speed">4x</button>
+    </div>
   </div>
 
   <!-- Brave Shields Dropdown Modal -->

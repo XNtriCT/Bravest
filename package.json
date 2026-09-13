@@ -1,7 +1,7 @@
 {
   "name": "bravest-browser",
-  "version": "1.0.0",
-  "description": "Bravest - Brave Browser fork with native 3x/4x YouTube speed playback and Brave Shields ad-blocking",
+  "version": "1.2.0",
+  "description": "Bravest - Brave Browser fork with native 1x-4x single-tap video speed toolbar, Windows Aero Snap support, and Brave Shields ad-blocking",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

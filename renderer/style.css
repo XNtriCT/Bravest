@@ -53,11 +53,11 @@ body {
   display: flex;
   align-items: center;
   height: 100%;
-  flex: 1;
+  max-width: calc(100% - 140px);
   padding-left: 8px;
   overflow-x: auto;
   scrollbar-width: none;
-  -webkit-app-region: no-drag !important;
+  -webkit-app-region: drag;
 }
 
 #tabstrip-container::-webkit-scrollbar {
@@ -69,7 +69,14 @@ body {
   align-items: center;
   gap: 6px;
   height: 100%;
-  -webkit-app-region: no-drag !important;
+  -webkit-app-region: drag;
+}
+
+#titlebar-drag-spacer {
+  flex: 1;
+  height: 100%;
+  min-width: 30px;
+  -webkit-app-region: drag;
 }
 
 .browser-tab {
@@ -394,6 +401,65 @@ body {
 
 .bm-icon {
   font-size: 10px;
+}
+
+/* Speed Bar in Bookmarks Toolbar */
+.speed-bar-divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+}
+
+.speed-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-orange);
+  letter-spacing: 0.3px;
+  user-select: none;
+  margin-right: 2px;
+}
+
+#speed-buttons-container {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.speed-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  height: 22px;
+  min-width: 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer !important;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-app-region: no-drag !important;
+}
+
+.speed-btn:hover {
+  background: rgba(251, 84, 43, 0.2);
+  border-color: rgba(251, 84, 43, 0.5);
+  color: #ffffff;
+}
+
+.speed-btn.active {
+  background: var(--accent-orange);
+  border-color: var(--accent-orange);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 8px var(--accent-orange-glow);
 }
 
 /* Shields Dropdown Modal */
