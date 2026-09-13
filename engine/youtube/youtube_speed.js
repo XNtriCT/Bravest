@@ -421,7 +421,26 @@
   }
 
   // ==========================================
-  // 6. Update All UI Indicators
+  // 6. Active Video Selector (Shorts & Main)
+  // ==========================================
+  function getActiveVideo() {
+    const activeShort = document.querySelector('ytd-reel-video-renderer[is-active] video') ||
+                        document.querySelector('#shorts-player video') ||
+                        document.querySelector('.reel-video-in-sequence[is-active] video');
+    if (activeShort) return activeShort;
+
+    const allVideos = Array.from(document.querySelectorAll('video'));
+    const playing = allVideos.find((v) => !v.paused && v.readyState > 0);
+    if (playing) return playing;
+
+    const mainVideo = document.querySelector('video.html5-main-video') || document.querySelector('#movie_player video');
+    if (mainVideo) return mainVideo;
+
+    return allVideos[0] || null;
+  }
+
+  // ==========================================
+  // 6b. Update All UI Indicators
   // ==========================================
   function updateAllIndicators(rate) {
     const rateText = `${rate.toFixed(2).replace(/\.00$/, '')}x`;
@@ -457,6 +476,28 @@
     });
   }
 
+  // Auto-enforce chosen speed whenever any video (Shorts or Main) starts playing or loads
+  ['play', 'playing', 'loadeddata'].forEach((evt) => {
+    document.addEventListener(
+      evt,
+      (e) => {
+        if (e.target && e.target.tagName === 'VIDEO') {
+          const v = e.target;
+          const targetSpeed = parseFloat(localStorage.getItem('bravest_speed')) || currentSpeed;
+          if (targetSpeed && !document.querySelector('.ad-showing')) {
+            try {
+              v.playbackRate = targetSpeed;
+              v.defaultPlaybackRate = targetSpeed;
+              if ('preservesPitch' in v) v.preservesPitch = true;
+              if ('webkitPreservesPitch' in v) v.webkitPreservesPitch = true;
+            } catch (_) {}
+          }
+        }
+      },
+      true
+    );
+  });
+
   // ==========================================
   // 7. Keyboard Hotkeys
   // ==========================================
@@ -466,7 +507,7 @@
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
 
-      const video = document.querySelector('video');
+      const video = getActiveVideo();
       if (!video) return;
 
       // Shift + > or ] key (Speed up)
@@ -511,14 +552,23 @@
     injectLinearSpeedBar();
     injectBottomControlBadge();
 
-    const video = document.querySelector('video');
-    if (video && currentSpeed && Math.abs(video.playbackRate - currentSpeed) > 0.05) {
-      if (!document.querySelector('.ad-showing')) {
-        video.playbackRate = currentSpeed;
-        video.preservesPitch = true;
+    // Enforce speed on ALL active & preloaded videos (Shorts feed & Main)
+    const videos = document.querySelectorAll('video');
+    videos.forEach((v) => {
+      if (currentSpeed && Math.abs(v.playbackRate - currentSpeed) > 0.05) {
+        if (!document.querySelector('.ad-showing')) {
+          try {
+            v.playbackRate = currentSpeed;
+            v.defaultPlaybackRate = currentSpeed;
+            if ('preservesPitch' in v) v.preservesPitch = true;
+            if ('webkitPreservesPitch' in v) v.webkitPreservesPitch = true;
+          } catch (_) {}
+        }
       }
-    }
-    updateAllIndicators(video ? video.playbackRate : currentSpeed);
+    });
+
+    const activeVideo = getActiveVideo();
+    updateAllIndicators(activeVideo ? activeVideo.playbackRate : currentSpeed);
   }, 400);
 
   // Initial load

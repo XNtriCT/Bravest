@@ -254,7 +254,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const wv = getActiveWebview();
     if (!wv) return;
 
-    wv.executeJavaScript('(()=>{ const v = document.querySelector("video"); return v ? v.playbackRate : 1; })()')
+    wv.executeJavaScript(`
+      (()=>{
+        const activeShort = document.querySelector('ytd-reel-video-renderer[is-active] video') ||
+                            document.querySelector('#shorts-player video') ||
+                            document.querySelector('.reel-video-in-sequence[is-active] video');
+        if (activeShort) return activeShort.playbackRate;
+
+        const all = Array.from(document.querySelectorAll('video'));
+        const playing = all.find(v => !v.paused && v.readyState > 0);
+        if (playing) return playing.playbackRate;
+
+        const mainVideo = document.querySelector('video.html5-main-video') || document.querySelector('#movie_player video');
+        if (mainVideo) return mainVideo.playbackRate;
+
+        return all[0] ? all[0].playbackRate : 1;
+      })()
+    `)
       .then((rate) => {
         if (rate) {
           if (ytSpeedBadge) {
@@ -270,20 +286,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Direct single-tap speed controller for active webview
+   * Direct single-tap speed controller for active webview (Shorts & Main)
    */
   function setVideoSpeed(speed) {
     const wv = getActiveWebview();
     if (!wv) return;
     wv.executeJavaScript(`
       (()=>{
-        const v = document.querySelector('video');
-        if (!v) return null;
         const rate = ${speed};
-        v.playbackRate = rate;
-        v.defaultPlaybackRate = rate;
-        if ('preservesPitch' in v) v.preservesPitch = true;
-        if ('webkitPreservesPitch' in v) v.webkitPreservesPitch = true;
+        const allVideos = document.querySelectorAll('video');
+        if (!allVideos || allVideos.length === 0) return null;
+        allVideos.forEach((v) => {
+          try {
+            v.playbackRate = rate;
+            v.defaultPlaybackRate = rate;
+            if ('preservesPitch' in v) v.preservesPitch = true;
+            if ('webkitPreservesPitch' in v) v.webkitPreservesPitch = true;
+          } catch (_) {}
+        });
         localStorage.setItem('bravest_speed', rate.toString());
         return rate;
       })()
@@ -328,20 +348,36 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!wv) return;
       wv.executeJavaScript(`
         (()=>{
-          const v = document.querySelector('video');
-          if (!v) return;
-          const speeds = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0];
-          let cur = Math.round(v.playbackRate * 100) / 100;
+          const activeShort = document.querySelector('ytd-reel-video-renderer[is-active] video') ||
+                              document.querySelector('#shorts-player video') ||
+                              document.querySelector('.reel-video-in-sequence[is-active] video');
+          const all = Array.from(document.querySelectorAll('video'));
+          const activeVideo = activeShort || all.find(v => !v.paused && v.readyState > 0) || all[0];
+          if (!activeVideo) return null;
+
+          const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.5, 4.0];
+          let cur = Math.round(activeVideo.playbackRate * 100) / 100;
           let next = speeds[0];
           for (let s of speeds) {
             if (s > cur + 0.05) { next = s; break; }
           }
-          v.playbackRate = next;
-          v.preservesPitch = true;
+          all.forEach((v) => {
+            try {
+              v.playbackRate = next;
+              v.defaultPlaybackRate = next;
+              if ('preservesPitch' in v) v.preservesPitch = true;
+              if ('webkitPreservesPitch' in v) v.webkitPreservesPitch = true;
+            } catch (_) {}
+          });
           localStorage.setItem('bravest_speed', next.toString());
           return next;
         })()
-      `).then(() => syncSpeedBadge()).catch(() => {});
+      `).then((rate) => {
+        if (rate) {
+          syncSpeedBadge();
+          updateSpeedButtonsUI(rate);
+        }
+      }).catch(() => {});
     });
   }
 
