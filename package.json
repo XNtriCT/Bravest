@@ -1,7 +1,7 @@
 {
   "name": "bravest-browser",
   "version": "1.2.0",
-  "description": "Bravest - Brave Browser fork with native 1x-4x single-tap video speed toolbar, Windows Aero Snap support, and Brave Shields ad-blocking",
+  "description": "Bravest - Brave Browser fork with continuous 1x-4x mouse speed control, single-tap video speed toolbar, and Brave Shields ad-blocking",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

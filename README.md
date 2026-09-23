@@ -1,6 +1,10 @@
 # 🦡 Bravest Browser
 
-> A privacy-first **Brave Browser fork** with the full **Brave Shields** ad-blocking engine, a dedicated **single-tap 1x–4x playback speed toolbar**, brand-new **continuous mouse speed control** (lock on with a wheel-click and tune the speed by moving the mouse), Windows **Aero Snap** window management, and a matching **Android app** with a drag-and-hold speed bubble.
+<p align="center">
+  <img src="assets/logo.png" alt="Bravest Browser logo" width="180">
+</p>
+
+> A privacy-first **Brave Browser fork** with the full **Brave Shields** ad-blocking engine, a dedicated **single-tap 1x–4x playback speed toolbar**, brand-new **continuous mouse speed control** (lock on with a wheel-click and tune the speed by moving the mouse), and a matching **Android app** with a drag-and-hold speed bubble.
 
 ![Bravest Browser](https://img.shields.io/badge/Bravest-Brave%20Fork-ff5500?style=for-the-badge&logo=brave)
 ![Version](https://img.shields.io/badge/Version-v1.2.0-orange?style=for-the-badge)
@@ -59,11 +63,6 @@ The 1x–4x speed bar sits directly below the URL bar. The active speed glows in
   - Blocks banner ads, tracking scripts, and popups.
   - Automatically strips YouTube video ads (pre-rolls and mid-rolls).
   - Real-time tracker & ad blocked counter in the Omnibox.
-- **🪟 Windows Aero Snap & Window Management**:
-  - Drag the browser window smoothly from anywhere across the titlebar.
-  - Full Windows Aero Snap support: drag to top to maximize, drag to left/right screen edges to snap and pin side-by-side.
-  - Double-click titlebar to toggle maximize and restore.
-  - Standard edge and corner resizing with dynamic maximize/restore icon toggle.
 - **🌐 Brave UI & Aesthetics**:
   - Modern Brave dark theme with orange accents and glassmorphism.
   - Multi-tab management with draggable tabs and fast keyboard navigation.
