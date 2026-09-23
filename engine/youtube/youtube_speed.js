@@ -544,9 +544,198 @@
   );
 
   // ==========================================
+  // 9. Mouse Speed Control (Wheel-Click Lock Mode)
+  // ==========================================
+  let mouseSpeedActive = false;
+  let ctrlHeld = false;
+  let lastMouseX = null;
+  let middleClickHandled = false;
+  let mouseRawSpeed = 1;
+
+  function isTypingTarget(el) {
+    if (!el) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+  }
+
+  function formatSpeedText(rate) {
+    return `${rate.toFixed(2).replace(/\.00$/, '')}x`;
+  }
+
+  function updateMouseSpeedHud(rate) {
+    if (!mouseSpeedActive) return;
+    const hud = document.getElementById('bravest-mouse-speed-hud');
+    if (!hud) return;
+    const valueEl = hud.querySelector('.bravest-mouse-value');
+    if (valueEl) valueEl.textContent = formatSpeedText(rate);
+  }
+
+  function showMouseSpeedHud() {
+    let hud = document.getElementById('bravest-mouse-speed-hud');
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.id = 'bravest-mouse-speed-hud';
+      hud.style.cssText = `
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(12, 12, 18, 0.94);
+        backdrop-filter: blur(10px);
+        border: 1.5px solid #ff5500;
+        border-radius: 24px;
+        padding: 7px 18px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 85, 0, 0.45);
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        user-select: none;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.18s ease;
+      `;
+      hud.innerHTML = `
+        <span style="font-size:15px;">&#128433;&#65039;</span>
+        <span style="color:#ffffff; font-weight:800; font-size:15px;">Mouse Speed</span>
+        <span class="bravest-mouse-value" style="color:#ff7733; font-weight:800; font-size:16px; min-width:54px; text-align:center;">1x</span>
+        <span style="color:#8a8aa0; font-size:10.5px; font-weight:600;">move &#8596; &nbsp;|&nbsp; CTRL = normal &nbsp;|&nbsp; wheel-click = off</span>
+      `;
+      document.body.appendChild(hud);
+    }
+    hud.style.display = 'flex';
+    requestAnimationFrame(() => {
+      hud.style.opacity = '1';
+    });
+  }
+
+  function hideMouseSpeedHud() {
+    const hud = document.getElementById('bravest-mouse-speed-hud');
+    if (hud) hud.style.opacity = '0';
+  }
+
+  function setMouseSpeedActive(active) {
+    mouseSpeedActive = active;
+    window.__bravest_mouse_speed_active = active;
+    lastMouseX = null;
+    if (active) {
+      const video = getActiveVideo();
+      mouseRawSpeed = video ? video.playbackRate : currentSpeed;
+      showMouseSpeedHud();
+      updateMouseSpeedHud(video ? video.playbackRate : currentSpeed);
+    } else {
+      hideMouseSpeedHud();
+    }
+  }
+
+  // Middle mouse button (wheel click) toggles the lock mode
+  document.addEventListener(
+    'mousedown',
+    (e) => {
+      middleClickHandled = false;
+      if (e.button !== 1) return;
+      // Hold CTRL to use the mouse normally (open links in new tabs, autoscroll, etc.)
+      if (ctrlHeld) return;
+      if (isTypingTarget(e.target)) return;
+      if (!getActiveVideo()) return;
+      middleClickHandled = true;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setMouseSpeedActive(!mouseSpeedActive);
+    },
+    true
+  );
+
+  // Suppress autoscroll / link-open defaults caused by the locking wheel click
+  document.addEventListener(
+    'auxclick',
+    (e) => {
+      if (e.button === 1 && middleClickHandled) {
+        e.preventDefault();
+        e.stopPropagation();
+        middleClickHandled = false;
+      }
+    },
+    true
+  );
+
+  // Horizontal mouse movement continuously tunes playback speed (1x - 4x)
+  window.addEventListener(
+    'mousemove',
+    (e) => {
+      if (!mouseSpeedActive || ctrlHeld) {
+        lastMouseX = null;
+        return;
+      }
+      if (!getActiveVideo()) return;
+
+      if (lastMouseX === null) {
+        lastMouseX = e.clientX;
+        return;
+      }
+
+      const dx = e.clientX - lastMouseX;
+      lastMouseX = e.clientX;
+      if (!dx) return;
+
+      // Sweeping roughly half the viewport horizontally spans the full 1x - 4x range.
+      // Accumulate on an unrounded value so slow, fine movements still register.
+      const sensitivity = 3 / (Math.max(window.innerWidth, 640) * 0.5);
+      mouseRawSpeed = Math.min(4, Math.max(1, mouseRawSpeed + dx * sensitivity));
+
+      const rounded = Math.round(mouseRawSpeed * 100) / 100;
+      if (Math.abs(rounded - currentSpeed) < 0.001) return;
+
+      applySpeed(rounded, false);
+      updateMouseSpeedHud(currentSpeed);
+    },
+    true
+  );
+
+  // Hold CTRL to temporarily use the mouse normally without leaving the lock mode
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key === 'Control') {
+        ctrlHeld = true;
+        lastMouseX = null;
+      }
+    },
+    true
+  );
+
+  window.addEventListener(
+    'keyup',
+    (e) => {
+      if (e.key === 'Control') {
+        ctrlHeld = false;
+        lastMouseX = null;
+      }
+    },
+    true
+  );
+
+  window.addEventListener('blur', () => {
+    ctrlHeld = false;
+    lastMouseX = null;
+  });
+
+  document.addEventListener('mouseleave', () => {
+    lastMouseX = null;
+  });
+
+  // ==========================================
   // 8. Continuous Monitor Loop
   // ==========================================
   setInterval(() => {
+    // Adopt speeds set from the browser toolbar / other sources
+    const storedSpeed = parseFloat(localStorage.getItem('bravest_speed'));
+    if (!isNaN(storedSpeed) && Math.abs(storedSpeed - currentSpeed) > 0.001) {
+      currentSpeed = storedSpeed;
+      mouseRawSpeed = storedSpeed;
+    }
+
     killYouTubeAds();
     injectPersistentPlayerPill();
     injectLinearSpeedBar();
@@ -568,7 +757,9 @@
     });
 
     const activeVideo = getActiveVideo();
-    updateAllIndicators(activeVideo ? activeVideo.playbackRate : currentSpeed);
+    const activeRate = activeVideo ? activeVideo.playbackRate : currentSpeed;
+    updateAllIndicators(activeRate);
+    updateMouseSpeedHud(activeRate);
   }, 400);
 
   // Initial load

@@ -28,5 +28,6 @@ contextBridge.exposeInMainWorld('bravestAPI', {
   // Listeners from Main Process
   onTabUpdated: (callback) => ipcRenderer.on('tab-updated', (_, data) => callback(data)),
   onTabCreated: (callback) => ipcRenderer.on('tab-created', (_, data) => callback(data)),
-  onTabClosed: (callback) => ipcRenderer.on('tab-closed', (_, data) => callback(data))
+  onTabClosed: (callback) => ipcRenderer.on('tab-closed', (_, data) => callback(data)),
+  onOpenInNewTab: (callback) => ipcRenderer.on('open-in-new-tab', (_, data) => callback(data))
 });

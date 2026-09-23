@@ -309,6 +309,18 @@ body {
   background: rgba(251, 84, 43, 0.3);
 }
 
+.omnibox-badge.mouse-active {
+  background: rgba(251, 84, 43, 0.4);
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 10px var(--accent-orange-glow);
+  animation: mousePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes mousePulse {
+  0%, 100% { box-shadow: 0 0 6px var(--accent-orange-glow); }
+  50% { box-shadow: 0 0 14px rgba(251, 84, 43, 0.7); }
+}
+
 /* Brave Shields Button */
 #shields-btn {
   background: rgba(251, 84, 43, 0.12);

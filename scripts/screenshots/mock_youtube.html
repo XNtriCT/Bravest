@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bravest Browser — 1x to 4x continuous playback speed control - YouTube</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #0f0f0f;
+    color: #f1f1f1;
+    font-family: Roboto, Arial, sans-serif;
+    overflow: hidden;
+  }
+  #masthead {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 20px;
+    border-bottom: 1px solid #272727;
+  }
+  .logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+  .logo .yt { background: #ff0000; color: #fff; border-radius: 5px; padding: 2px 7px 3px; font-size: 13px; }
+  .search {
+    flex: 1;
+    max-width: 480px;
+    height: 36px;
+    border: 1px solid #303030;
+    border-radius: 18px;
+    background: #121212;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    color: #888;
+    font-size: 13px;
+  }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #3ea6ff; margin-left: auto; }
+
+  #page { display: flex; gap: 24px; padding: 20px 24px; }
+  #primary { flex: 1; min-width: 0; }
+
+  #player-container-outer { width: 100%; }
+  #player-container { width: 100%; }
+  #movie_player {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.22), transparent 45%),
+      radial-gradient(circle at 78% 74%, rgba(255, 140, 0, 0.30), transparent 50%),
+      linear-gradient(135deg, #16233f 0%, #3a1d52 55%, #5a1f2b 100%);
+  }
+  .fake-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fake-play .circle {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: rgba(10, 10, 16, 0.55);
+    border: 2px solid rgba(255, 255, 255, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #fff;
+    padding-left: 6px;
+  }
+  .fake-progress {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .fake-progress span {
+    display: block;
+    width: 62%;
+    height: 100%;
+    background: #ff0000;
+  }
+  .ytp-chrome-bottom {
+    position: absolute;
+    left: 12px; right: 12px; bottom: 6px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+  }
+  .ytp-right-controls { display: flex; align-items: center; gap: 14px; }
+
+  #below { padding-top: 14px; }
+  .title { font-size: 20px; font-weight: 700; line-height: 1.3; margin-bottom: 12px; }
+  .meta { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .channel { width: 38px; height: 38px; border-radius: 50%; background: #7a4de0; }
+  .meta .lines { display: flex; flex-direction: column; gap: 4px; }
+  .meta .line { height: 10px; border-radius: 5px; background: #272727; }
+  .line.w120 { width: 120px; }
+  .line.w80 { width: 80px; }
+  .subscribe { margin-left: auto; background: #f1f1f1; color: #0f0f0f; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 18px; }
+
+  .comment { display: flex; gap: 12px; margin-top: 16px; }
+  .comment .avatar2 { width: 34px; height: 34px; border-radius: 50%; background: #2b6cb0; }
+  .comment .body { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .comment .line { height: 9px; border-radius: 5px; background: #1f1f1f; }
+  .line.w60 { width: 60%; }
+  .line.w85 { width: 85%; }
+  .line.w40 { width: 40%; }
+
+  #secondary { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+  .thumb-row { display: flex; gap: 10px; }
+  .thumb { width: 150px; height: 84px; border-radius: 8px; background: linear-gradient(135deg, #1d2b4d, #4a2350); flex-shrink: 0; }
+  .thumb.b { background: linear-gradient(135deg, #123b2e, #2b5a3f); }
+  .thumb.c { background: linear-gradient(135deg, #4d2a12, #6a3a1f); }
+  .thumb.d { background: linear-gradient(135deg, #2c1d4d, #512f6b); }
+  .thumb-info { flex: 1; display: flex; flex-direction: column; gap: 7px; padding-top: 4px; }
+  .thumb-info .line { height: 9px; border-radius: 5px; background: #272727; }
+  .line.w90 { width: 90%; }
+  .line.w70 { width: 70%; }
+  .line.w50 { width: 50%; }
+
+  video { display: none; }
+</style>
+</head>
+<body>
+  <div id="masthead">
+    <div class="logo"><span class="yt">▶</span> YouTube</div>
+    <div class="search">Search</div>
+    <div class="avatar"></div>
+  </div>
+
+  <div id="page">
+    <div id="primary">
+      <div id="player-container-outer">
+        <div id="player-container">
+          <div id="movie_player" class="html5-video-player playing-mode">
+            <video class="html5-main-video" playsinline></video>
+            <div class="fake-play"><div class="circle">▶</div></div>
+            <div class="fake-progress"><span></span></div>
+            <div class="ytp-chrome-bottom">
+              <div class="ytp-right-controls"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="below">
+        <div class="title">Bravest Browser — 1x to 4x continuous playback speed control</div>
+        <div class="meta">
+          <div class="channel"></div>
+          <div class="lines">
+            <div class="line w120"></div>
+            <div class="line w80"></div>
+          </div>
+          <div class="subscribe">Subscribe</div>
+        </div>
+        <div class="comment">
+          <div class="avatar2"></div>
+          <div class="body">
+            <div class="line w60"></div>
+            <div class="line w85"></div>
+            <div class="line w40"></div>
+          </div>
+        </div>
+        <div class="comment">
+          <div class="avatar2"></div>
+          <div class="body">
+            <div class="line w60"></div>
+            <div class="line w85"></div>
+            <div class="line w40"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="secondary">
+      <div class="thumb-row"><div class="thumb"></div><div class="thumb-info"><div class="line w90"></div><div class="line w70"></div><div class="line w50"></div></div></div>
+      <div class="thumb-row"><div class="thumb b"></div><div class="thumb-info"><div class="line w90"></div><div class="line w70"></div><div class="line w50"></div></div></div>
+      <div class="thumb-row"><div class="thumb c"></div><div class="thumb-info"><div class="line w90"></div><div class="line w70"></div><div class="line w50"></div></div></div>
+      <div class="thumb-row"><div class="thumb d"></div><div class="thumb-info"><div class="line w90"></div><div class="line w70"></div><div class="line w50"></div></div></div>
+    </div>
+  </div>
+</body>
+</html>

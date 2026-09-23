@@ -78,6 +78,19 @@ app.whenReady().then(async () => {
     // Attach cosmetic ad blocking
     shieldsEngine.attachToWebContents(contents);
 
+    // Route pop-ups (middle-click / target=_blank / window.open) into a new
+    // in-window tab instead of spawning a separate Electron window.
+    contents.setWindowOpenHandler((details) => {
+      const url = details && details.url;
+      if (url && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('open-in-new-tab', {
+          url,
+          disposition: (details && details.disposition) || 'foreground-tab'
+        });
+      }
+      return { action: 'deny' };
+    });
+
     // If webview navigates to YouTube, inject the speed engine and ad destroyer
     const injectYouTubeTurbo = () => {
       const url = contents.getURL() || '';

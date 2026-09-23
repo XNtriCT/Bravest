@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /**
    * Create a new tab
    */
-  function createTab(initialUrl = 'https://www.youtube.com') {
+  function createTab(initialUrl = 'https://www.youtube.com', activate = true) {
     tabCounter++;
     const tabId = `tab-${tabCounter}`;
     const url = formatSearchOrUrl(initialUrl);
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    switchTab(tabId);
+    if (activate) switchTab(tabId);
     return tabData;
   }
 
@@ -259,25 +259,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeShort = document.querySelector('ytd-reel-video-renderer[is-active] video') ||
                             document.querySelector('#shorts-player video') ||
                             document.querySelector('.reel-video-in-sequence[is-active] video');
-        if (activeShort) return activeShort.playbackRate;
-
-        const all = Array.from(document.querySelectorAll('video'));
-        const playing = all.find(v => !v.paused && v.readyState > 0);
-        if (playing) return playing.playbackRate;
-
-        const mainVideo = document.querySelector('video.html5-main-video') || document.querySelector('#movie_player video');
-        if (mainVideo) return mainVideo.playbackRate;
-
-        return all[0] ? all[0].playbackRate : 1;
+        let rate;
+        if (activeShort) {
+          rate = activeShort.playbackRate;
+        } else {
+          const all = Array.from(document.querySelectorAll('video'));
+          const playing = all.find(v => !v.paused && v.readyState > 0);
+          const mainVideo = document.querySelector('video.html5-main-video') || document.querySelector('#movie_player video');
+          rate = playing ? playing.playbackRate
+               : (mainVideo ? mainVideo.playbackRate : (all[0] ? all[0].playbackRate : 1));
+        }
+        return { rate: rate, mouseActive: !!window.__bravest_mouse_speed_active };
       })()
     `)
-      .then((rate) => {
+      .then((res) => {
+        if (!res) return;
+        const { rate, mouseActive } = res;
         if (rate) {
           if (ytSpeedBadge) {
             const badgeText = ytSpeedBadge.querySelector('.badge-text');
+            const rateText = `${parseFloat(rate).toFixed(2).replace(/\.00$/, '')}x`;
             if (badgeText) {
-              badgeText.textContent = `${parseFloat(rate).toFixed(2).replace(/\.00$/, '')}x Speed`;
+              badgeText.textContent = mouseActive ? `${rateText} · Mouse` : `${rateText} Speed`;
             }
+            ytSpeedBadge.classList.toggle('mouse-active', !!mouseActive);
+            ytSpeedBadge.title = mouseActive
+              ? 'Mouse Speed Control active - move mouse left/right (hold CTRL for normal mouse, wheel-click to exit)'
+              : 'Bravest Speed Turbo Active';
           }
           updateSpeedButtonsUI(rate);
         }
@@ -315,14 +323,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSpeedButtonsUI(rate) {
     const parsedRate = parseFloat(rate);
-    document.querySelectorAll('.speed-btn').forEach((btn) => {
-      const spd = parseFloat(btn.dataset.speed);
-      if (Math.abs(spd - parsedRate) < 0.05) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
+    if (isNaN(parsedRate)) return;
+
+    const buttons = Array.from(document.querySelectorAll('.speed-btn'));
+    if (!buttons.length) return;
+
+    // Light up the closest preset button so continuous mouse tuning always
+    // shows an approximate speed indication (e.g. 1.70 -> 1.75x).
+    let nearest = null;
+    let bestDiff = Infinity;
+    buttons.forEach((btn) => {
+      const diff = Math.abs(parseFloat(btn.dataset.speed) - parsedRate);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        nearest = btn;
       }
     });
+
+    buttons.forEach((btn) => btn.classList.toggle('active', btn === nearest));
   }
 
   // Quick Speed Buttons click listener (Toolbar just below URL bar)
@@ -333,13 +351,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Periodic speed sync
+  // Periodic speed sync (feeds the toolbar buttons from continuous mouse tuning)
   setInterval(() => {
     const wv = getActiveWebview();
     if (wv && (wv.getURL() || '').includes('youtube.com')) {
       syncSpeedBadge();
     }
-  }, 600);
+  }, 300);
 
   // Clicking Omnibox Speed Badge cycles through speeds: 1x -> 2x -> 3x -> 4x
   if (ytSpeedBadge) {
@@ -473,6 +491,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.bravestAPI.onShieldsUpdate((data) => {
       if (shieldsBlockedCount) shieldsBlockedCount.textContent = data.total || 0;
       if (shieldStatAds) shieldStatAds.textContent = data.total || 0;
+    });
+  }
+
+  // Pop-ups requested by web pages (middle-click / target=_blank / window.open)
+  // open as a new tab in this same window instead of a separate window.
+  if (window.bravestAPI?.onOpenInNewTab) {
+    window.bravestAPI.onOpenInNewTab((data) => {
+      if (data && data.url) {
+        const openInBackground = data.disposition === 'background-tab';
+        createTab(data.url, !openInBackground);
+      }
     });
   }
 

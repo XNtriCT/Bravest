@@ -1,11 +1,21 @@
 package com.bravest.browser
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.webkit.*
@@ -14,9 +24,14 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var rootLayout: FrameLayout
     private lateinit var webView: WebView
     private lateinit var urlEditText: EditText
     private lateinit var btnShields: LinearLayout
@@ -29,15 +44,36 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSpeedPill: TextView
     private lateinit var fullscreenContainer: FrameLayout
     private lateinit var speedButtonsContainer: LinearLayout
-    private lateinit var btnSpeedMinus: Button
-    private lateinit var btnSpeedPlus: Button
+    private lateinit var speedBubble: FrameLayout
+    private lateinit var bubbleGlow: View
+    private lateinit var bubbleCore: View
+    private lateinit var bubbleRipple1: View
+    private lateinit var bubbleRipple2: View
+    private lateinit var bubbleLabel: TextView
+    private lateinit var textSpeedReadout: TextView
 
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     private val shieldsEngine = ShieldsEngine()
-    private val speedOptions = arrayOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f, 3.5f, 4.0f)
+    private val speedOptions = arrayOf(
+        0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f,
+        2.25f, 2.5f, 2.75f, 3.0f, 3.5f, 4.0f
+    )
     private var currentSpeed: Float = 1.0f
+
+    // Bubble "tap & hold" tuning state
+    private var tuning = false
+    private var tuneBaseSpeed = 1.0f
+    private var tuneDownRawX = 0f
+    private var tuneDownRawY = 0f
+    private var tuneStartTx = 0f
+    private var tuneStartTy = 0f
+    private var lastJsPushTime = 0L
+
+    private var glowAnimator: ObjectAnimator? = null
+    private var rippleAnimator1: ObjectAnimator? = null
+    private var rippleAnimator2: ObjectAnimator? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         initViews()
         setupSpeedBar()
         setupWebView()
+        setupBubble()
         setupListeners()
 
         // Handle Android Back Navigation inside WebView
@@ -67,6 +104,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
+        rootLayout = findViewById(R.id.rootLayout)
         webView = findViewById(R.id.webView)
         urlEditText = findViewById(R.id.urlEditText)
         btnShields = findViewById(R.id.btnShields)
@@ -79,78 +117,241 @@ class MainActivity : AppCompatActivity() {
         btnSpeedPill = findViewById(R.id.btnSpeedPill)
         fullscreenContainer = findViewById(R.id.fullscreenContainer)
         speedButtonsContainer = findViewById(R.id.speedButtonsContainer)
-        btnSpeedMinus = findViewById(R.id.btnSpeedMinus)
-        btnSpeedPlus = findViewById(R.id.btnSpeedPlus)
+        speedBubble = findViewById(R.id.speedBubble)
+        bubbleGlow = findViewById(R.id.bubbleGlow)
+        bubbleCore = findViewById(R.id.bubbleCore)
+        bubbleRipple1 = findViewById(R.id.bubbleRipple1)
+        bubbleRipple2 = findViewById(R.id.bubbleRipple2)
+        bubbleLabel = findViewById(R.id.bubbleLabel)
+        textSpeedReadout = findViewById(R.id.textSpeedReadout)
     }
 
+    // ==========================================
+    // Top speed selection bar (compact pills)
+    // ==========================================
     private fun setupSpeedBar() {
         speedButtonsContainer.removeAllViews()
 
+        val density = resources.displayMetrics.density
+        val heightPx = (24 * density).toInt()
+        val padPx = (7 * density).toInt()
+        val marginPx = (3 * density).toInt()
+
         for (spd in speedOptions) {
-            val btn = Button(this).apply {
-                text = "${spd}x"
-                textSize = 11f
-                setPadding(18, 0, 18, 0)
+            val pill = TextView(this).apply {
+                text = formatSpeed(spd)
+                textSize = 10f
                 gravity = Gravity.CENTER
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_secondary))
+                setBackgroundResource(R.drawable.bg_speed_btn)
+                setPadding(padPx, 0, padPx, 0)
                 minWidth = 0
-                minHeight = 0
-                val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    (30 * resources.displayMetrics.density).toInt()
-                ).apply {
-                    marginEnd = (4 * resources.displayMetrics.density).toInt()
-                }
-                layoutParams = params
+                minimumWidth = 0
+                includeFontPadding = false
+                isClickable = true
+                isFocusable = true
                 tag = spd
-
-                setOnClickListener {
-                    setPlaybackSpeed(spd)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    heightPx
+                ).apply {
+                    marginEnd = marginPx
                 }
+                setOnClickListener { setPlaybackSpeed(spd) }
             }
-            speedButtonsContainer.addView(btn)
-        }
-        updateSpeedUi(1.0f)
-
-        btnSpeedMinus.setOnClickListener {
-            val idx = speedOptions.indexOf(currentSpeed)
-            if (idx > 0) {
-                setPlaybackSpeed(speedOptions[idx - 1])
-            } else {
-                setPlaybackSpeed(speedOptions[0])
-            }
+            speedButtonsContainer.addView(pill)
         }
 
-        btnSpeedPlus.setOnClickListener {
-            val idx = speedOptions.indexOf(currentSpeed)
-            if (idx != -1 && idx < speedOptions.size - 1) {
-                setPlaybackSpeed(speedOptions[idx + 1])
-            } else if (idx == -1) {
-                setPlaybackSpeed(2.0f)
-            } else {
-                setPlaybackSpeed(4.0f)
-            }
-        }
+        updateSpeedUi(currentSpeed)
     }
 
     private fun setPlaybackSpeed(speed: Float) {
         currentSpeed = speed
         updateSpeedUi(speed)
-        webView.evaluateJavascript("if (window.bravestSetSpeed) window.bravestSetSpeed($speed);", null)
+        pushSpeedToWeb(speed, force = true)
     }
 
     private fun updateSpeedUi(speed: Float) {
-        btnSpeedPill.text = "⚡ ${speed}x"
+        btnSpeedPill.text = "⚡ ${formatSpeed(speed)}"
+        bubbleLabel.text = formatSpeed(speed)
+
+        // Light up the nearest preset pill (approximate indication for fine tuning)
+        var nearest: View? = null
+        var bestDiff = Float.MAX_VALUE
+        for (i in 0 until speedButtonsContainer.childCount) {
+            val child = speedButtonsContainer.getChildAt(i)
+            val preset = child.tag as? Float ?: continue
+            val diff = abs(preset - speed)
+            if (diff < bestDiff) {
+                bestDiff = diff
+                nearest = child
+            }
+        }
 
         for (i in 0 until speedButtonsContainer.childCount) {
-            val child = speedButtonsContainer.getChildAt(i) as? Button ?: continue
-            val btnSpeed = child.tag as? Float ?: 1.0f
-            if (Math.abs(btnSpeed - speed) < 0.05f) {
+            val child = speedButtonsContainer.getChildAt(i) as? TextView ?: continue
+            if (child === nearest) {
                 child.setBackgroundResource(R.drawable.bg_speed_btn_active)
-                child.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                child.setTextColor(Color.WHITE)
             } else {
                 child.setBackgroundResource(R.drawable.bg_speed_btn)
                 child.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
             }
+        }
+    }
+
+    // ==========================================
+    // Tap-and-hold speed bubble ("globule")
+    // ==========================================
+    private fun setupBubble() {
+        startBubbleAnimations()
+
+        speedBubble.setOnTouchListener { v, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    startTuning(event.rawX, event.rawY)
+                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (tuning) updateTuning(event.rawX, event.rawY)
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    endTuning()
+                    v.parent?.requestDisallowInterceptTouchEvent(false)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun startBubbleAnimations() {
+        glowAnimator = ObjectAnimator.ofPropertyValuesHolder(
+            bubbleGlow,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 0.92f, 1.22f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.92f, 1.22f),
+            PropertyValuesHolder.ofFloat(View.ALPHA, 0.6f, 1f)
+        ).apply {
+            duration = 1100
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+
+        rippleAnimator1 = ObjectAnimator.ofPropertyValuesHolder(
+            bubbleRipple1,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 0.8f, 1.5f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.8f, 1.5f),
+            PropertyValuesHolder.ofFloat(View.ALPHA, 0.85f, 0f)
+        ).apply {
+            duration = 1500
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = DecelerateInterpolator()
+            start()
+        }
+
+        rippleAnimator2 = ObjectAnimator.ofPropertyValuesHolder(
+            bubbleRipple2,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 0.8f, 1.5f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.8f, 1.5f),
+            PropertyValuesHolder.ofFloat(View.ALPHA, 0.85f, 0f)
+        ).apply {
+            duration = 1500
+            repeatCount = ValueAnimator.INFINITE
+            startDelay = 750
+            interpolator = DecelerateInterpolator()
+            start()
+        }
+    }
+
+    private fun startTuning(rawX: Float, rawY: Float) {
+        tuning = true
+        tuneBaseSpeed = currentSpeed
+        tuneDownRawX = rawX
+        tuneDownRawY = rawY
+        tuneStartTx = speedBubble.translationX
+        tuneStartTy = speedBubble.translationY
+
+        speedBubble.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        speedBubble.animate().scaleX(1.08f).scaleY(1.08f).setDuration(120).start()
+        bubbleCore.animate().scaleX(1.2f).scaleY(1.2f).setDuration(120).start()
+
+        textSpeedReadout.text = formatSpeed(currentSpeed)
+        textSpeedReadout.visibility = View.VISIBLE
+        textSpeedReadout.alpha = 0f
+        textSpeedReadout.animate().alpha(1f).setDuration(120).start()
+    }
+
+    private fun updateTuning(rawX: Float, rawY: Float) {
+        val dx = rawX - tuneDownRawX
+        val dy = rawY - tuneDownRawY
+
+        // Let the bubble follow the finger anywhere on screen
+        val minTx = -speedBubble.left.toFloat()
+        val maxTx = (rootLayout.width - speedBubble.width - speedBubble.left).toFloat()
+        val minTy = -speedBubble.top.toFloat()
+        val maxTy = (rootLayout.height - speedBubble.height - speedBubble.top).toFloat()
+        speedBubble.translationX = (tuneStartTx + dx).coerceIn(minTx, maxTx)
+        speedBubble.translationY = (tuneStartTy + dy).coerceIn(minTy, maxTy)
+
+        // Horizontal movement tunes speed: right = faster, left = slower (1x - 4x)
+        val widthPx = max(resources.displayMetrics.widthPixels.toFloat(), 720f)
+        val sensitivity = 3f / (widthPx * 0.5f)
+        val next = (tuneBaseSpeed + dx * sensitivity).coerceIn(1f, 4f)
+        val rounded = (next * 100f).roundToInt() / 100f
+
+        if (abs(rounded - currentSpeed) > 0.001f) {
+            currentSpeed = rounded
+            updateSpeedUi(currentSpeed)
+            pushSpeedToWeb(currentSpeed)
+        }
+        textSpeedReadout.text = formatSpeed(currentSpeed)
+    }
+
+    private fun endTuning() {
+        if (!tuning) return
+        tuning = false
+
+        speedBubble.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        speedBubble.animate()
+            .translationX(0f)
+            .translationY(0f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(220)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+        bubbleCore.animate().scaleX(1f).scaleY(1f).setDuration(160).start()
+
+        textSpeedReadout.animate()
+            .alpha(0f)
+            .setDuration(180)
+            .withEndAction { textSpeedReadout.visibility = View.GONE }
+            .start()
+
+        // Guarantee the last fine-tuned value lands on the video
+        pushSpeedToWeb(currentSpeed, force = true)
+    }
+
+    private fun pushSpeedToWeb(speed: Float, force: Boolean = false) {
+        val now = SystemClock.uptimeMillis()
+        if (!force && now - lastJsPushTime < 33L) return
+        lastJsPushTime = now
+
+        val value = String.format(Locale.US, "%.2f", speed)
+        webView.evaluateJavascript("if (window.bravestSetSpeed) window.bravestSetSpeed($value);", null)
+    }
+
+    private fun formatSpeed(speed: Float): String {
+        val rounded = (speed * 100f).roundToInt() / 100f
+        return if (abs(rounded - rounded.toInt()) < 0.001f) {
+            "${rounded.toInt()}x"
+        } else {
+            String.format(Locale.US, "%.2f", rounded).trimEnd('0').trimEnd('.') + "x"
         }
     }
 
@@ -200,7 +401,7 @@ class MainActivity : AppCompatActivity() {
                 shieldsEngine.injectCosmeticFilter(webView)
                 if (url != null && url.contains("youtube.com", ignoreCase = true)) {
                     YouTubeSpeedEngine.inject(webView)
-                    setPlaybackSpeed(currentSpeed)
+                    pushSpeedToWeb(currentSpeed, force = true)
                 }
             }
         }
@@ -263,11 +464,16 @@ class MainActivity : AppCompatActivity() {
             showShieldsDialog()
         }
 
-        // Top Speed Pill click
+        // Top Speed Pill click steps up to the next preset (wraps at 4x)
         btnSpeedPill.setOnClickListener {
-            val idx = speedOptions.indexOf(currentSpeed)
-            val nextIdx = (idx + 1) % speedOptions.size
-            setPlaybackSpeed(speedOptions[nextIdx])
+            var next = speedOptions[0]
+            for (s in speedOptions) {
+                if (s > currentSpeed + 0.01f) {
+                    next = s
+                    break
+                }
+            }
+            setPlaybackSpeed(next)
         }
     }
 
@@ -287,7 +493,7 @@ class MainActivity : AppCompatActivity() {
         val status = if (shieldsEngine.shieldsEnabled) "Active" else "Disabled"
         MaterialAlertDialogBuilder(this)
             .setTitle("🛡️ Brave Shields Protection")
-            .setMessage("Status: $status\n\nBlocked Trackers & Ads: ${shieldsEngine.blockedCount}\n\nFeatures:\n✓ YouTube Video Ads Blocked\n✓ 3.0x & 4.0x Playback Turbo\n✓ Background Audio Playback\n✓ Lower Quick Speed Panel")
+            .setMessage("Status: $status\n\nBlocked Trackers & Ads: ${shieldsEngine.blockedCount}\n\nFeatures:\n✓ YouTube Video Ads Blocked\n✓ Continuous 1x - 4x Speed Tuning\n✓ Drag-and-Hold Speed Bubble\n✓ Background Audio Playback\n✓ Top Speed Selection Bar")
             .setPositiveButton(if (shieldsEngine.shieldsEnabled) "Turn Off" else "Turn On") { _, _ ->
                 shieldsEngine.shieldsEnabled = !shieldsEngine.shieldsEnabled
                 webView.reload()
@@ -303,6 +509,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        glowAnimator?.cancel()
+        rippleAnimator1?.cancel()
+        rippleAnimator2?.cancel()
         webView.destroy()
         super.onDestroy()
     }

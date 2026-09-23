@@ -1,159 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#121217"
     tools:context=".MainActivity">
 
-    <!-- Top App Bar & Omnibox -->
     <LinearLayout
-        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="#1A1A24"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <!-- Honey Badger App Logo & Brave Shields Button with Blocked Counter -->
+        <!-- Top App Bar & Omnibox -->
         <LinearLayout
-            android:id="@+id/btnShields"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
             android:orientation="horizontal"
-            android:gravity="center"
-            android:background="@drawable/bg_shield_btn"
-            android:paddingStart="6dp"
-            android:paddingEnd="8dp"
-            android:layout_marginEnd="6dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:gravity="center_vertical"
+            android:background="#1A1A24"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/app_logo"
-                android:contentDescription="Bravest" />
-
-            <TextView
-                android:id="@+id/textShieldsCount"
+            <!-- Honey Badger App Logo & Brave Shields Button with Blocked Counter -->
+            <LinearLayout
+                android:id="@+id/btnShields"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/bg_shield_btn"
+                android:paddingStart="6dp"
+                android:paddingEnd="8dp"
+                android:layout_marginEnd="6dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/app_logo"
+                    android:contentDescription="Bravest" />
+
+                <TextView
+                    android:id="@+id/textShieldsCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="#FB542B"
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- Omnibox Search / URL Input -->
+            <EditText
+                android:id="@+id/urlEditText"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_omnibox"
+                android:hint="Search or type URL"
+                android:textColorHint="#6B6B80"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:singleLine="true"
+                android:imeOptions="actionGo"
+                android:inputType="textUri"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
+
+            <!-- Speed Indicator Pill in Top Bar -->
+            <TextView
+                android:id="@+id/btnSpeedPill"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_speed_pill"
+                android:gravity="center"
+                android:text="⚡ 1x"
                 android:textColor="#FB542B"
                 android:textStyle="bold"
-                android:textSize="12sp"
-                android:layout_marginStart="4dp" />
+                android:textSize="11sp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:layout_marginStart="6dp"
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
 
-        <!-- Omnibox Search / URL Input -->
-        <EditText
-            android:id="@+id/urlEditText"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_omnibox"
-            android:hint="Search or type URL"
-            android:textColorHint="#6B6B80"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:singleLine="true"
-            android:imeOptions="actionGo"
-            android:inputType="textUri"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
-
-        <!-- 3x/4x Speed Pill in Top Bar -->
-        <TextView
-            android:id="@+id/btnSpeedPill"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:background="@drawable/bg_speed_pill"
-            android:gravity="center"
-            android:text="⚡ 1.0x"
-            android:textColor="#FB542B"
-            android:textStyle="bold"
-            android:textSize="11sp"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:layout_marginStart="6dp"
-            android:clickable="true"
-            android:focusable="true" />
-    </LinearLayout>
-
-    <!-- Loading Progress Bar -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:max="100"
-        android:progressTint="#FB542B"
-        android:visibility="gone" />
-
-    <!-- Content Area: WebView & Fullscreen Container -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <WebView
-            android:id="@+id/webView"
+        <!-- Loading Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <FrameLayout
-            android:id="@+id/fullscreenContainer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#000000"
+            android:layout_height="3dp"
+            android:max="100"
+            android:progressTint="#FB542B"
             android:visibility="gone" />
-    </FrameLayout>
 
-    <!-- Lower Panel Speed Selection Dock (One-Tap Floating Toggles) -->
-    <LinearLayout
-        android:id="@+id/speedControlPanel"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="#161622"
-        android:paddingStart="6dp"
-        android:paddingEnd="6dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⚡ SPEED:"
-            android:textColor="#FB542B"
-            android:textStyle="bold"
-            android:textSize="11sp"
-            android:layout_marginEnd="4dp" />
-
-        <Button
-            android:id="@+id/btnSpeedMinus"
-            android:layout_width="28dp"
-            android:layout_height="30dp"
-            android:text="-"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/bg_speed_btn"
-            android:gravity="center"
-            android:padding="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:layout_marginEnd="4dp" />
-
-        <!-- Horizontal Scrollable Quick Speed Pills -->
+        <!-- Speed Selection Bar: directly below the URL space, like the web app -->
         <HorizontalScrollView
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:scrollbars="none">
+            android:id="@+id/speedBarScroll"
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:background="#161622"
+            android:scrollbars="none"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:id="@+id/speedButtonsContainer"
@@ -161,76 +114,161 @@
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp">
-                <!-- Dynamically populated in MainActivity -->
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp">
+                <!-- Compact speed pills are added dynamically in MainActivity -->
             </LinearLayout>
         </HorizontalScrollView>
 
-        <Button
-            android:id="@+id/btnSpeedPlus"
-            android:layout_width="28dp"
-            android:layout_height="30dp"
-            android:text="+"
-            android:textSize="16sp"
-            android:textStyle="bold"
+        <!-- Content Area: WebView & Fullscreen Container -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <FrameLayout
+                android:id="@+id/fullscreenContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#000000"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Bottom Navigation Bar (buttons pushed to the sides to make room for the bubble) -->
+        <LinearLayout
+            android:id="@+id/bottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:orientation="horizontal"
+            android:background="#12121A"
+            android:gravity="center_vertical">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="12dp"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_previous"
+                android:tint="#A0A0B8"
+                android:contentDescription="Back" />
+
+            <ImageButton
+                android:id="@+id/btnForward"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginStart="6dp"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_media_next"
+                android:tint="#A0A0B8"
+                android:contentDescription="Forward" />
+
+            <!-- Center gap reserved for the draggable speed bubble -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnHome"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginEnd="6dp"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_today"
+                android:tint="#FB542B"
+                android:contentDescription="Brave Search" />
+
+            <ImageButton
+                android:id="@+id/btnRefresh"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:layout_marginEnd="12dp"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_rotate"
+                android:tint="#A0A0B8"
+                android:contentDescription="Reload" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Drag-and-Hold Speed Bubble (globule) between the next and search buttons -->
+    <FrameLayout
+        android:id="@+id/speedBubble"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_gravity="bottom|center_horizontal">
+
+        <View
+            android:id="@+id/bubbleGlow"
+            android:layout_width="66dp"
+            android:layout_height="66dp"
+            android:background="@drawable/bg_bubble_glow" />
+
+        <View
+            android:id="@+id/bubbleRipple1"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_bubble_ripple" />
+
+        <View
+            android:id="@+id/bubbleRipple2"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_bubble_ripple" />
+
+        <View
+            android:id="@+id/bubbleCore"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_bubble_core" />
+
+        <TextView
+            android:id="@+id/bubbleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="1x"
             android:textColor="#FFFFFF"
-            android:background="@drawable/bg_speed_btn"
-            android:gravity="center"
-            android:padding="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:layout_marginStart="4dp" />
-    </LinearLayout>
+            android:textStyle="bold"
+            android:textSize="10sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
+    </FrameLayout>
 
-    <!-- Bottom Navigation Bar -->
-    <LinearLayout
-        android:id="@+id/bottomBar"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:orientation="horizontal"
-        android:background="#12121A"
-        android:gravity="center_vertical">
+    <!-- Live speed readout shown while the bubble is held -->
+    <TextView
+        android:id="@+id/textSpeedReadout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="118dp"
+        android:background="@drawable/bg_speed_readout"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="1x"
+        android:textColor="#FB542B"
+        android:textStyle="bold"
+        android:textSize="26sp"
+        android:fontFamily="sans-serif-medium"
+        android:visibility="gone" />
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_media_previous"
-            android:tint="#A0A0B8"
-            android:contentDescription="Back" />
-
-        <ImageButton
-            android:id="@+id/btnForward"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_media_next"
-            android:tint="#A0A0B8"
-            android:contentDescription="Forward" />
-
-        <ImageButton
-            android:id="@+id/btnHome"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_today"
-            android:tint="#FB542B"
-            android:contentDescription="Home" />
-
-        <ImageButton
-            android:id="@+id/btnRefresh"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_rotate"
-            android:tint="#A0A0B8"
-            android:contentDescription="Refresh" />
-    </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>
